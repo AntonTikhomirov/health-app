@@ -5,6 +5,7 @@ import com.tikhomirov.zdorovyak.ai.Msg
 import com.tikhomirov.zdorovyak.data.AppDatabase
 import com.tikhomirov.zdorovyak.data.ChatMessage
 import com.tikhomirov.zdorovyak.data.Settings
+import com.tikhomirov.zdorovyak.labs.LabTable
 import com.tikhomirov.zdorovyak.strength.Catalog
 import com.tikhomirov.zdorovyak.strength.fmt
 import java.time.LocalDate
@@ -50,11 +51,12 @@ class CoachRepo(private val db: AppDatabase, private val claude: ClaudeClient, p
 Подход: когнитивно-поведенческая терапия, мотивационное интервьюирование, коучинг привычек. Тёплый, прямой, без сюсюканья и без шаблонных фраз.
 Что ты делаешь:
 - помогаешь разбираться с мыслями, эмоциями, стрессом, срывами в питании, мотивацией к тренировкам;
-- опираешься на реальные данные ниже (сон, Body Battery, стресс, питание, вес, тренировки) и замечаешь связи, но не превращаешь каждый ответ в отчёт;
+- опираешься на реальные данные ниже (сон, Body Battery, стресс, питание, вес, тренировки, анализы) и замечаешь связи, но не превращаешь каждый ответ в отчёт;
+- про анализы говоришь осторожно: это не диагноз, отклонения предлагаешь обсудить с врачом, лекарства и дозировки не назначаешь;
 - задаёшь один точный вопрос, а не пять; предлагаешь маленькие конкретные шаги;
 - помнишь прошлые разговоры по памяти ниже и возвращаешься к договорённостям.
 Границы: ты не врач и не заменяешь психотерапевта. Не ставишь диагнозов. Если звучат мысли о самоповреждении, суициде, признаки тяжёлой депрессии, панических атак, зависимости или медицинские симптомы — мягко и прямо рекомендуй обратиться к специалисту (в Казахстане: телефон доверия 150, экстренно 112) и не продолжай как обычно.
-Отвечай по-русски, коротко: 2–6 абзацев максимум, без заголовков, без эмодзи.
+Отвечай по-русски, коротко: 2–6 абзацев максимум, без заголовков, без эмодзи, без markdown-разметки (ответы могут зачитываться вслух).
 
 Долговременная память о человеке:
 ${settings.coachMemory.ifBlank { "(пока пусто)" }}
@@ -64,7 +66,7 @@ $snapshot
 """.trimIndent()
     }
 
-    suspend fun dataSnapshot(): String {
+    suspend fun dataSnapshot(includeLabs: Boolean = true): String {
         val today = LocalDate.now().toEpochDay()
         val p = settings.profile.value
         val sb = StringBuilder()
@@ -95,6 +97,14 @@ $snapshot
             sb.appendLine("Garmin:")
             g.forEach {
                 sb.appendLine("  ${LocalDate.ofEpochDay(it.day)}: сон ${it.sleepMinutes?.let { m -> "${m / 60}ч${m % 60}м" } ?: "-"} (оценка ${it.sleepScore ?: "-"}), пульс покоя ${it.restingHr ?: "-"}, HRV ${it.hrvAvg ?: "-"}, Body Battery ${it.bodyBatteryLow ?: "-"}–${it.bodyBatteryHigh ?: "-"}, стресс ${it.stressAvg ?: "-"}, шаги ${it.steps ?: "-"}")
+            }
+        }
+        if (includeLabs) {
+            val since = LocalDate.now().minusMonths(18).toEpochDay()
+            val labs = db.labs().resultsNow().filter { it.day >= since }
+            if (labs.isNotEmpty()) {
+                sb.appendLine("Анализы (последние значения, ↑↓ — вне референса лаборатории):")
+                sb.appendLine(LabTable.summary(labs, maxLines = 60))
             }
         }
         return sb.toString().ifBlank { "(данных пока нет)" }

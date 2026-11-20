@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
@@ -71,7 +72,17 @@ class SmokeTest {
         // Коуч
         tab("Коуч")
         rule.onNodeWithText("Что коуч помнит").assertExists()
-        rule.onNodeWithText("Напишите, что на душе…").performTextInput("Привет")
+        rule.onNodeWithText("Напишите или надиктуйте…").performTextInput("Привет")
+        rule.onNodeWithContentDescription("Диктовать").assertExists()
+
+        // Анализы: из «Тела» открывается отдельный экран
+        tab("Тело")
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Анализы"))
+        rule.onNodeWithText("Загрузить").performClick()
+        rule.waitUntil(5_000) { has("PDF или фото") }
+        rule.onNodeWithText("Не диагноз", substring = true).assertExists()
+        tab("Назад")
+        rule.waitUntil(5_000) { has("Вес") }
 
         // Сегодня: карточка тренировки, быстрый ввод
         tab("Сегодня")
@@ -84,6 +95,8 @@ class SmokeTest {
         // Настройки
         tab("Настройки")
         rule.onNodeWithText("CLAUDE API").assertExists()
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("ГОЛОС КОУЧА"))
+        rule.onNodeWithText("Google на телефоне").assertExists()
         rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Войти в Garmin"))
         tab("Назад")
         rule.onNodeWithText("Здоровяк").assertDoesNotExist()

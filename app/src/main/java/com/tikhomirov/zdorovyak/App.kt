@@ -18,6 +18,8 @@ class App : Application() {
     lateinit var training: TrainingRepo; private set
     lateinit var coach: CoachRepo; private set
     lateinit var garmin: GarminClient; private set
+    lateinit var labs: com.tikhomirov.zdorovyak.labs.LabsRepo; private set
+    lateinit var speaker: com.tikhomirov.zdorovyak.voice.Speaker; private set
 
     override fun onCreate() {
         super.onCreate()
@@ -30,6 +32,8 @@ class App : Application() {
         training = TrainingRepo(db, claude)
         coach = CoachRepo(db, claude, settings)
         garmin = GarminClient(settings, db)
+        labs = com.tikhomirov.zdorovyak.labs.LabsRepo(this, db, claude, settings) { coach }
+        speaker = com.tikhomirov.zdorovyak.voice.Speaker(this, settings)
         runCatching { com.tikhomirov.zdorovyak.garmin.GarminSyncWorker.schedule(this) }
     }
 }

@@ -171,14 +171,48 @@ interface GarminDao {
     fun lastActivities(n: Int): Flow<List<GarminActivity>>
 }
 
+@Dao
+interface LabDao {
+    @Query("SELECT * FROM lab_report ORDER BY day DESC, id DESC")
+    fun reports(): Flow<List<LabReport>>
+
+    @Query("SELECT * FROM lab_report WHERE id = :id")
+    suspend fun report(id: Long): LabReport?
+
+    @Query("SELECT * FROM lab_result ORDER BY day, id")
+    fun results(): Flow<List<LabResult>>
+
+    @Query("SELECT * FROM lab_result ORDER BY day, id")
+    suspend fun resultsNow(): List<LabResult>
+
+    @Query("SELECT * FROM lab_result WHERE reportId = :reportId ORDER BY id")
+    suspend fun resultsFor(reportId: Long): List<LabResult>
+
+    @Insert suspend fun insertReport(r: LabReport): Long
+    @androidx.room.Update suspend fun updateReport(r: LabReport)
+    @Insert suspend fun insertResults(r: List<LabResult>)
+    @androidx.room.Update suspend fun updateResult(r: LabResult)
+    @Delete suspend fun deleteResult(r: LabResult)
+
+    @Query("UPDATE lab_result SET day = :day WHERE reportId = :reportId")
+    suspend fun moveResults(reportId: Long, day: Long)
+
+    @Query("DELETE FROM lab_result WHERE reportId = :reportId")
+    suspend fun deleteResultsFor(reportId: Long)
+
+    @Query("DELETE FROM lab_report WHERE id = :id")
+    suspend fun deleteReport(id: Long)
+}
+
 @Database(
     entities = [
         WeightEntry::class, Measurement::class, FoodEntry::class, FoodItem::class,
         ProgramEntity::class, ExerciseStateEntity::class, WorkoutEntity::class, SetLog::class,
         ExerciseFeedback::class, OtherActivity::class, ChatMessage::class,
         GarminDay::class, GarminActivity::class,
+        LabReport::class, LabResult::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -187,10 +221,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun training(): TrainingDao
     abstract fun chat(): ChatDao
     abstract fun garmin(): GarminDao
+    abstract fun labs(): LabDao
 
     companion object {
         fun build(ctx: Context): AppDatabase =
-            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2).build()
+            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
 
         /**
          * v2: у продукта в справочнике появился источник данных. Старые продукты считаем введёнными руками,
@@ -201,6 +236,18 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE food_item ADD COLUMN source TEXT NOT NULL DEFAULT 'user'")
                 db.execSQL("UPDATE food_item SET source = 'off' WHERE barcode IS NOT NULL")
                 db.execSQL("UPDATE food_item SET source = 'ai' WHERE barcode IS NULL AND name IN (SELECT name FROM food WHERE source = 'photo') AND name NOT IN (SELECT name FROM food WHERE source = 'manual')")
+            }
+        }
+    
+        /** v3 (0.3.0): раздел «Анализы». Только новые таблицы, старые данные не трогаем. */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `lab_report` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `day` INTEGER NOT NULL, `lab` TEXT NOT NULL, `title` TEXT NOT NULL, `filePath` TEXT NOT NULL, `mime` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `interpretation` TEXT, `interpretedAt` INTEGER)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_report_day` ON `lab_report` (`day`)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `lab_result` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `reportId` INTEGER NOT NULL, `day` INTEGER NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `category` TEXT NOT NULL, `value` REAL, `valueText` TEXT NOT NULL, `unit` TEXT NOT NULL, `refLow` REAL, `refHigh` REAL, `refText` TEXT NOT NULL, `flag` TEXT NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_reportId` ON `lab_result` (`reportId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_code` ON `lab_result` (`code`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_day` ON `lab_result` (`day`)")
             }
         }
     }

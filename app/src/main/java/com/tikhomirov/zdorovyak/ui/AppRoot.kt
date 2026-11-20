@@ -69,6 +69,7 @@ fun AppRoot(app: App) {
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var workoutOpen by rememberSaveable { mutableStateOf(false) }
+    var labsOpen by rememberSaveable { mutableStateOf(false) }
     var quickOpen by remember { mutableStateOf(false) }
     var pendingQuick by remember { mutableStateOf<Quick?>(null) }
     val snack = remember { SnackbarHostState() }
@@ -86,6 +87,13 @@ fun AppRoot(app: App) {
         if (settingsOpen) {
             BackHandler { settingsOpen = false }
             SettingsScreen(onClose = { settingsOpen = false })
+            return@CompositionLocalProvider
+        }
+        if (labsOpen) {
+            BackHandler { labsOpen = false }
+            Scaffold(containerColor = Z.Bg, snackbarHost = { SnackbarHost(snack) }) { pad ->
+                Column(Modifier.padding(pad)) { LabsScreen(onClose = { labsOpen = false }) }
+            }
             return@CompositionLocalProvider
         }
         if (workoutOpen) {
@@ -126,7 +134,7 @@ fun AppRoot(app: App) {
             when (tab) {
                 Tab.TODAY -> TodayScreen(m, onOpenTab = { tab = it }, onStartWorkout = { workoutOpen = true })
                 Tab.FOOD -> NutritionScreen(m, pendingQuick) { pendingQuick = null }
-                Tab.BODY -> BodyScreen(m, pendingQuick) { pendingQuick = null }
+                Tab.BODY -> BodyScreen(m, pendingQuick, onOpenLabs = { labsOpen = true }) { pendingQuick = null }
                 Tab.TRAINING -> TrainingScreen(m, pendingQuick, onStartWorkout = { workoutOpen = true }) { pendingQuick = null }
                 Tab.COACH -> CoachScreen(m)
             }

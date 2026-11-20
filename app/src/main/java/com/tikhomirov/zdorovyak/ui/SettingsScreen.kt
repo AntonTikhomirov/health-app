@@ -78,8 +78,31 @@ fun SettingsScreen(onClose: () -> Unit) {
     var loggedIn by remember { mutableStateOf(app.garmin.isLoggedIn) }
     var mfaWaiter by remember { mutableStateOf<CompletableDeferred<String?>?>(null) }
     var testing by remember { mutableStateOf(false) }
+    var ttsEngine by remember { mutableStateOf(app.settings.ttsEngine) }
+    var ttsWhen by remember { mutableStateOf(app.settings.ttsWhen) }
+    var ttsSpeed by remember { mutableStateOf(app.settings.ttsSpeed.toString()) }
+    var deviceVoice by remember { mutableStateOf(app.settings.deviceVoice) }
+    var deviceVoices by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var yKey by remember { mutableStateOf(app.settings.yandexKey) }
+    var yVoice by remember { mutableStateOf(app.settings.yandexVoice) }
+    var gKey by remember { mutableStateOf(app.settings.googleTtsKey) }
+    var gVoice by remember { mutableStateOf(app.settings.googleVoice) }
+    var autoSend by remember { mutableStateOf(app.settings.voiceAutoSend) }
+    androidx.compose.runtime.LaunchedEffect(ttsEngine) {
+        if (ttsEngine == "device" && deviceVoices.isEmpty()) deviceVoices = runCatching { app.speaker.deviceVoices() }.getOrDefault(emptyList())
+    }
+
+    fun saveVoice() {
+        app.settings.ttsEngine = ttsEngine; app.settings.ttsWhen = ttsWhen
+        ttsSpeed.toFloatOrNull()?.let { app.settings.ttsSpeed = it }
+        app.settings.deviceVoice = deviceVoice
+        app.settings.yandexKey = yKey; app.settings.yandexVoice = yVoice
+        app.settings.googleTtsKey = gKey; app.settings.googleVoice = gVoice
+        app.settings.voiceAutoSend = autoSend
+    }
 
     fun save() {
+        saveVoice()
         app.settings.claudeKey = key
         app.settings.claudeModel = model
         app.settings.saveProfile(profile.copy(
@@ -152,6 +175,44 @@ fun SettingsScreen(onClose: () -> Unit) {
                     NumField("жиры", fat, { fat = it }, Modifier.weight(1f), decimal = false)
                     NumField("углеводы", carbs, { carbs = it }, Modifier.weight(1f), decimal = false)
                 }
+            }
+
+            SectionTitle("Голос коуча")
+            Muted("Диктовка — бесплатное распознавание Google на телефоне (кнопка микрофона в чате). Озвучка ответов:")
+            ChipRow(listOf("off" to "Выкл", "device" to "Google на телефоне", "yandex" to "Яндекс (облако)", "google" to "Google Cloud"), ttsEngine) { ttsEngine = it }
+            when (ttsEngine) {
+                "device" -> {
+                    Muted("Бесплатно. Голоса с пометкой «сеть» звучат заметно живее офлайновых, но нужен интернет. Нет русского — Настройки Android → Синтез речи → Google → Установить голосовые данные.")
+                    if (deviceVoices.isNotEmpty()) ChipRow(listOf("" to "Авто") + deviceVoices, deviceVoice) { deviceVoice = it }
+                }
+                "yandex" -> {
+                    Muted("Yandex SpeechKit — самый естественный русский. 6 710 ₸ (1 342 ₽) за 1 млн символов: ответ коуча ≈ 800 символов ≈ 5 ₸. Ключ: Yandex Cloud → сервисный аккаунт с ролью ai.speechkit-tts.user → API-ключ.")
+                    TextField1("API-ключ SpeechKit", yKey, { yKey = it }, password = true)
+                    ChipRow(com.tikhomirov.zdorovyak.voice.YandexTts.VOICES, yVoice) { yVoice = it }
+                    Muted("В этом месяце: ${app.settings.cloudCharsThisMonth("yandex")} символов ≈ ${com.tikhomirov.zdorovyak.voice.TtsText.yandexCostKzt(app.settings.cloudCharsThisMonth("yandex")).r0()} ₸")
+                }
+                "google" -> {
+                    Muted("Google Cloud Text-to-Speech: 1 млн символов WaveNet или Chirp 3 HD в месяц бесплатно — для одного человека это обычно 0 ₸. Ключ: Google Cloud → включить Text-to-Speech API → Credentials → API key (нужен платёжный аккаунт).")
+                    TextField1("API-ключ Google Cloud", gKey, { gKey = it }, password = true)
+                    ChipRow(com.tikhomirov.zdorovyak.voice.GoogleCloudTts.VOICES, gVoice) { gVoice = it }
+                    TextField1("Имя голоса", gVoice, { gVoice = it })
+                    Muted("В этом месяце: ${app.settings.cloudCharsThisMonth("google")} символов из 1 000 000 бесплатных")
+                }
+            }
+            if (ttsEngine != "off") {
+                Muted("Когда озвучивать")
+                ChipRow(listOf("voice" to "Если спросил голосом", "always" to "Всегда", "manual" to "Только по кнопке"), ttsWhen) { ttsWhen = it }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    NumField("Скорость", ttsSpeed, { ttsSpeed = it }, Modifier.weight(1f))
+                    OutlinedButton(onClick = {
+                        saveVoice()
+                        app.speaker.speak("Привет, ${name.ifBlank { "Антон" }}. Так звучит голос коуча. Если нравится, оставляем.")
+                    }) { Text("Послушать") }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Отправлять сразу после диктовки", Modifier.weight(1f))
+                Switch(checked = autoSend, onCheckedChange = { autoSend = it })
             }
 
             SectionTitle("Garmin Connect")

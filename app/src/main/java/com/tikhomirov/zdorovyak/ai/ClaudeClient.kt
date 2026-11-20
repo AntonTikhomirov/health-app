@@ -25,6 +25,8 @@ class ClaudeException(msg: String) : Exception(msg)
 sealed interface Part {
     data class Text(val text: String) : Part
     data class Image(val base64Jpeg: String) : Part
+    /** PDF целиком (Claude читает и текст, и картинки страниц). */
+    data class Pdf(val base64: String) : Part
 }
 
 data class Msg(val role: String, val parts: List<Part>) {
@@ -63,6 +65,14 @@ class ClaudeClient(private val settings: Settings) {
                                 when (p) {
                                     is Part.Text -> add(buildJsonObject {
                                         put("type", "text"); put("text", p.text)
+                                    })
+                                    is Part.Pdf -> add(buildJsonObject {
+                                        put("type", "document")
+                                        put("source", buildJsonObject {
+                                            put("type", "base64")
+                                            put("media_type", "application/pdf")
+                                            put("data", p.base64)
+                                        })
                                     })
                                     is Part.Image -> add(buildJsonObject {
                                         put("type", "image")
