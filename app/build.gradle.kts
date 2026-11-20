@@ -15,8 +15,8 @@ android {
         applicationId = "com.tikhomirov.zdorovyak"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
     // Свой ключ подписи: APK с любой машины ставятся поверх друг друга без потери данных.
     // Ключ НЕ хранится в git: положите keystore/zdorovyak.jks и keystore/keystore.properties
@@ -45,8 +45,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    // схемы Room нужны MigrationTest (Robolectric читает ассеты debug-сборки)
+    sourceSets["debug"].assets.srcDir("$projectDir/schemas")
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
@@ -81,6 +83,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.room:room-testing:2.6.1")
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")

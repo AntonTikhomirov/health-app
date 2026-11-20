@@ -19,7 +19,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,7 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.horizontalScroll
 import com.tikhomirov.zdorovyak.ai.Msg
+import com.tikhomirov.zdorovyak.nutrition.Activity
+import com.tikhomirov.zdorovyak.nutrition.GoalMode
+import com.tikhomirov.zdorovyak.nutrition.Sex
 import com.tikhomirov.zdorovyak.ui.theme.Z
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
@@ -59,6 +65,13 @@ fun SettingsScreen(onClose: () -> Unit) {
     var prot by remember { mutableStateOf(profile.proteinTarget.toString()) }
     var fat by remember { mutableStateOf(profile.fatTarget.toString()) }
     var carbs by remember { mutableStateOf(profile.carbsTarget.toString()) }
+    var sex by remember { mutableStateOf(profile.sex) }
+    var activity by remember { mutableStateOf(profile.activity) }
+    var goalMode by remember { mutableStateOf(profile.goalMode) }
+    var rate by remember { mutableStateOf(profile.rateKgPerWeek.r1()) }
+    var protPerKg by remember { mutableStateOf(profile.proteinPerKg.r1()) }
+    var auto by remember { mutableStateOf(profile.autoTargets) }
+    val energy by app.settings.energy.collectAsState()
     var gEmail by remember { mutableStateOf(app.settings.garminEmail) }
     var gPass by remember { mutableStateOf(app.settings.garminPassword) }
     var garminBusy by remember { mutableStateOf<String?>(null) }
@@ -74,7 +87,12 @@ fun SettingsScreen(onClose: () -> Unit) {
             targetWeightKg = target.toDoubleOrNull(), goal = goal,
             kcalTarget = kcal.toIntOrNull() ?: profile.kcalTarget, proteinTarget = prot.toIntOrNull() ?: profile.proteinTarget,
             fatTarget = fat.toIntOrNull() ?: profile.fatTarget, carbsTarget = carbs.toIntOrNull() ?: profile.carbsTarget,
+            sex = sex, activity = activity, goalMode = goalMode,
+            rateKgPerWeek = rate.toDoubleOrNull()?.coerceIn(0.0, 1.0) ?: profile.rateKgPerWeek,
+            proteinPerKg = protPerKg.toDoubleOrNull()?.coerceIn(0.8, 2.5) ?: profile.proteinPerKg,
+            autoTargets = auto,
         ))
+        // Пересчёт норм подхватит AppRoot (следит за профилем и взвешиваниями)
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
@@ -105,16 +123,36 @@ fun SettingsScreen(onClose: () -> Unit) {
             }
             TextField1("Цель словами", goal, { goal = it })
 
-            SectionTitle("Нормы на день")
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                NumField("ккал", kcal, { kcal = it }, Modifier.weight(1f), decimal = false)
-                NumField("белок", prot, { prot = it }, Modifier.weight(1f), decimal = false)
+            Muted("Пол")
+            ChipRow(Sex.entries.map { it.name to it.title }, sex) { sex = it }
+            Muted("Активность")
+            ChipRow(Activity.entries.map { it.name to it.title }, activity) { activity = it }
+            Muted(runCatching { Activity.valueOf(activity).hint }.getOrDefault(""))
+
+            SectionTitle("Нормы КБЖУ")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Считать автоматически", Modifier.weight(1f))
+                Switch(checked = auto, onCheckedChange = { auto = it })
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                NumField("жиры", fat, { fat = it }, Modifier.weight(1f), decimal = false)
-                NumField("углеводы", carbs, { carbs = it }, Modifier.weight(1f), decimal = false)
+            if (auto) {
+                ChipRow(GoalMode.entries.map { it.name to it.title }, goalMode) { goalMode = it }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (goalMode != GoalMode.MAINTAIN.name) NumField("Темп, кг/нед", rate, { rate = it }, Modifier.weight(1f))
+                    NumField("Белок, г/кг", protPerKg, { protPerKg = it }, Modifier.weight(1f))
+                }
+                Muted("Сейчас: ${profile.kcalTarget} ккал · Б ${profile.proteinTarget} · Ж ${profile.fatTarget} · У ${profile.carbsTarget}")
+                Muted("Старт — по формуле Миффлина–Сан Жеора от тренда веса. Когда наберётся 10 полных дней питания и 4 взвешивания за 3 недели, расход раз в неделю уточняется по факту: сколько съели и как менялся вес. Безопасный темп похудения 0,5–0,7 % веса в неделю; белок 1,6–2 г/кг для силовых после 40.")
+                if (energy.note.isNotBlank()) Muted(energy.note)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    NumField("ккал", kcal, { kcal = it }, Modifier.weight(1f), decimal = false)
+                    NumField("белок", prot, { prot = it }, Modifier.weight(1f), decimal = false)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    NumField("жиры", fat, { fat = it }, Modifier.weight(1f), decimal = false)
+                    NumField("углеводы", carbs, { carbs = it }, Modifier.weight(1f), decimal = false)
+                }
             }
-            Muted("Ориентир для снижения веса: дефицит 300–500 ккал от поддержки, белок 1,6–2 г на кг целевого веса.")
 
             SectionTitle("Garmin Connect")
             Muted("Вход через неофициальный протокол мобильного приложения Garmin (как в python-библиотеке garminconnect). Пароль хранится зашифрованно и нужен только для входа; дальше работают токены. Garmin может сломать этот способ в любой момент.")
@@ -154,7 +192,7 @@ fun SettingsScreen(onClose: () -> Unit) {
 
             Spacer(Modifier.height(8.dp))
             Button(onClick = { save(); snack("Сохранено"); onClose() }, Modifier.fillMaxWidth()) { Text("Сохранить") }
-            Muted("Версия 0.1.0 · данные хранятся только на телефоне")
+            Muted("Версия ${com.tikhomirov.zdorovyak.BuildConfig.VERSION_NAME} · данные хранятся только на телефоне")
             Spacer(Modifier.height(40.dp))
         }
     }
@@ -168,5 +206,12 @@ fun SettingsScreen(onClose: () -> Unit) {
             confirmButton = { TextButton(onClick = { d.complete(code); mfaWaiter = null }) { Text("OK") } },
             dismissButton = { TextButton(onClick = { d.complete(null); mfaWaiter = null }) { Text("Отмена") } },
         )
+    }
+}
+
+@Composable
+private fun ChipRow(options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        options.forEach { (k, t) -> FilterChip(selected = selected == k, onClick = { onSelect(k) }, label = { Text(t) }) }
     }
 }

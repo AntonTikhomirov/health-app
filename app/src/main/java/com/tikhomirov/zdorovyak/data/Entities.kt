@@ -1,5 +1,6 @@
 package com.tikhomirov.zdorovyak.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -43,7 +44,11 @@ data class FoodEntry(
     val barcode: String? = null,
 )
 
-/** Справочник продуктов: на 100 г. Пополняется из штрихкодов и ручного ввода. */
+/**
+ * Справочник продуктов: на 100 г. Пополняется из штрихкодов, этикеток, ручного ввода и встроенной базы.
+ * source — откуда цифры: user (введено руками) / label (фото этикетки) / off (Open Food Facts) /
+ * base (встроенная база) / ai (оценка Claude). Более надёжный источник не перезаписывается менее надёжным.
+ */
 @Entity(tableName = "food_item", indices = [Index(value = ["barcode"]), Index(value = ["name"])])
 data class FoodItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -54,6 +59,7 @@ data class FoodItem(
     val carbs100: Double,
     val barcode: String? = null,
     val lastUsed: Long = System.currentTimeMillis(),
+    @ColumnInfo(defaultValue = "user") val source: String = "user",
 )
 
 @Entity(tableName = "program")

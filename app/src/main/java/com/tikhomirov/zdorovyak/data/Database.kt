@@ -10,6 +10,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +21,9 @@ interface BodyDao {
 
     @Query("SELECT * FROM weight ORDER BY day DESC, id DESC LIMIT :n")
     suspend fun lastWeights(n: Int): List<WeightEntry>
+
+    @Query("SELECT * FROM weight WHERE day >= :from ORDER BY day, id")
+    suspend fun weightsSince(from: Long): List<WeightEntry>
 
     @Insert suspend fun insertWeight(e: WeightEntry): Long
     @Delete suspend fun deleteWeight(e: WeightEntry)
@@ -57,7 +62,18 @@ interface FoodDao {
     suspend fun byName(name: String): FoodItem?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsertItem(i: FoodItem): Long
+
+    @Query("UPDATE food_item SET lastUsed = :t WHERE id = :id")
+    suspend fun touchItem(id: Long, t: Long)
+
+    @Query("SELECT * FROM food WHERE day = :day ORDER BY time")
+    suspend fun forDayNow(day: Long): List<FoodEntry>
+
+    @Query("SELECT day, SUM(kcal) AS kcal FROM food WHERE day BETWEEN :from AND :to GROUP BY day")
+    suspend fun kcalByDay(from: Long, to: Long): List<DayKcal>
 }
+
+data class DayKcal(val day: Long, val kcal: Double)
 
 @Dao
 interface TrainingDao {
@@ -162,7 +178,7 @@ interface GarminDao {
         ExerciseFeedback::class, OtherActivity::class, ChatMessage::class,
         GarminDay::class, GarminActivity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -174,6 +190,18 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         fun build(ctx: Context): AppDatabase =
-            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").build()
+            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2).build()
+
+        /**
+         * v2: у продукта в справочнике появился источник данных. Старые продукты считаем введёнными руками,
+         * кроме тех, что попали туда из анализа фото тарелки: это оценки ИИ.
+         */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food_item ADD COLUMN source TEXT NOT NULL DEFAULT 'user'")
+                db.execSQL("UPDATE food_item SET source = 'off' WHERE barcode IS NOT NULL")
+                db.execSQL("UPDATE food_item SET source = 'ai' WHERE barcode IS NULL AND name IN (SELECT name FROM food WHERE source = 'photo') AND name NOT IN (SELECT name FROM food WHERE source = 'manual')")
+            }
+        }
     }
 }

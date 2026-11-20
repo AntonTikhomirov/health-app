@@ -24,7 +24,9 @@ class App : Application() {
         db = AppDatabase.build(this)
         settings = Settings(this)
         claude = ClaudeClient(settings)
-        nutrition = NutritionRepo(db, claude)
+        nutrition = NutritionRepo(db, claude, settings) {
+            com.tikhomirov.zdorovyak.nutrition.FoodBase.parse(assets.open("foods_ru.tsv").reader(Charsets.UTF_8))
+        }
         training = TrainingRepo(db, claude)
         coach = CoachRepo(db, claude, settings)
         garmin = GarminClient(settings, db)
