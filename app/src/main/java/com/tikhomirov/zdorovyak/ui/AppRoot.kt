@@ -30,6 +30,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +74,13 @@ fun AppRoot(app: App) {
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val showSnack: (String) -> Unit = { msg -> scope.launch { snack.showSnackbar(msg) } }
+
+    // Авто-нормы КБЖУ: пересчёт при изменении профиля и при новом взвешивании (и раз в неделю — по факту)
+    val profileNow by app.settings.profile.collectAsState()
+    val weightsNow by app.db.body().weights().collectAsState(initial = null)
+    LaunchedEffect(profileNow, weightsNow) {
+        if (weightsNow != null) runCatching { app.nutrition.refreshTargets() }
+    }
 
     CompositionLocalProvider(LocalApp provides app, LocalSnack provides showSnack) {
         if (settingsOpen) {

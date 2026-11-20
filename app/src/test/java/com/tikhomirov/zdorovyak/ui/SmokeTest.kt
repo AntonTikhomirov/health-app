@@ -65,7 +65,8 @@ class SmokeTest {
         rule.onNodeWithText("OK").performClick()
 
         // История появилась
-        rule.onNode(hasScrollAction()).performScrollToNode(hasText("прикидка"))
+        // история приходит из Room асинхронно — ждём, пока строка появится в списке
+        rule.waitUntil(10_000) { runCatching { rule.onNode(hasScrollAction()).performScrollToNode(hasText("прикидка")) }.isSuccess }
 
         // Коуч
         tab("Коуч")
@@ -83,7 +84,7 @@ class SmokeTest {
         // Настройки
         tab("Настройки")
         rule.onNodeWithText("CLAUDE API").assertExists()
-        rule.onNode(hasScrollAction()).performScrollToNode(hasText("Войти в Garmin"))
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Войти в Garmin"))
         tab("Назад")
         rule.onNodeWithText("Здоровяк").assertDoesNotExist()
     }

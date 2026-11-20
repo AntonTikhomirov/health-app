@@ -22,11 +22,28 @@ data class Profile(
     val fatTarget: Int = 70,
     val carbsTarget: Int = 220,
     val goal: String = "Снизить вес и стать сильнее",
+    // Авто-нормы КБЖУ (nutrition/Targets.kt). Значения enum храним строками, чтобы старый JSON читался.
+    val sex: String = "M",
+    val activity: String = "LIGHT",
+    val goalMode: String = "LOSE",
+    val rateKgPerWeek: Double = 0.5,
+    val proteinPerKg: Double = 1.8,
+    val autoTargets: Boolean = true,
     val experience: String = "небольшой",
     val trainingDays: Int = 3,
     val sessionMinutes: Int = 50,
     val limitations: String = "",
     val inventory: Inventory = Inventory(),
+)
+
+/** Состояние адаптивного расхода: текущая оценка, когда пересчитывали, пояснение для экрана. */
+@Serializable
+data class EnergyState(
+    val tdee: Double? = null,          // null — ещё не было расчёта по факту, работает формула
+    val adaptive: Boolean = false,     // true — оценка уже по факту (вес + питание)
+    val lastCheckDay: Long = 0,
+    val note: String = "",
+    val formulaTdee: Double? = null,
 )
 
 /**
@@ -61,6 +78,16 @@ class Settings(ctx: Context) {
     fun saveProfile(p: Profile) {
         plain.edit().putString("profile", json.encodeToString(p)).apply()
         _profile.value = p
+    }
+
+    private val _energy = MutableStateFlow(
+        plain.getString("energy", null)?.let { runCatching { json.decodeFromString<EnergyState>(it) }.getOrNull() } ?: EnergyState()
+    )
+    val energy: StateFlow<EnergyState> = _energy
+
+    fun saveEnergy(e: EnergyState) {
+        plain.edit().putString("energy", json.encodeToString(e)).apply()
+        _energy.value = e
     }
 
     var claudeKey: String
