@@ -1,8 +1,5 @@
 package com.tikhomirov.zdorovyak.nutrition
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Base64
 import com.tikhomirov.zdorovyak.ai.ClaudeClient
 import com.tikhomirov.zdorovyak.ai.Msg
 import com.tikhomirov.zdorovyak.ai.Part
@@ -24,7 +21,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
@@ -203,18 +199,7 @@ class NutritionRepo(
         return PhotoResult(items, obj["comment"]?.jsonPrimitive?.content ?: "")
     }
 
-    private fun compress(file: File): String {
-        val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, opts)
-        var sample = 1
-        while (opts.outWidth / sample > 2000 || opts.outHeight / sample > 2000) sample *= 2
-        val bmp = BitmapFactory.decodeFile(file.absolutePath, BitmapFactory.Options().apply { inSampleSize = sample })
-        val scale = 1568.0 / maxOf(bmp.width, bmp.height)
-        val scaled = if (scale < 1) Bitmap.createScaledBitmap(bmp, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), true) else bmp
-        val out = ByteArrayOutputStream()
-        scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
-        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
-    }
+    private fun compress(file: File): String = com.tikhomirov.zdorovyak.ai.Images.jpegBase64(file)
 
     // ---------- Нормы ----------
 

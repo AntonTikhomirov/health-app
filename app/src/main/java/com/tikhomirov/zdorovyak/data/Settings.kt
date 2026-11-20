@@ -123,6 +123,59 @@ class Settings(ctx: Context) {
         get() = plain.getInt("coach_mem_count", 0)
         set(v) = plain.edit().putInt("coach_mem_count", v).apply()
 
+    // ---------- Голос коуча ----------
+
+    /** Озвучка ответов: off / device (Google TTS на телефоне) / yandex (SpeechKit) / google (Cloud TTS). */
+    var ttsEngine: String
+        get() = plain.getString("tts_engine", "device") ?: "device"
+        set(v) = plain.edit().putString("tts_engine", v).apply()
+
+    /** Когда озвучивать: voice — если вопрос задан голосом, always — всегда, manual — только по кнопке. */
+    var ttsWhen: String
+        get() = plain.getString("tts_when", "voice") ?: "voice"
+        set(v) = plain.edit().putString("tts_when", v).apply()
+
+    var ttsSpeed: Float
+        get() = plain.getFloat("tts_speed", 1.0f)
+        set(v) = plain.edit().putFloat("tts_speed", v.coerceIn(0.6f, 1.8f)).apply()
+
+    var deviceVoice: String
+        get() = plain.getString("device_voice", "") ?: ""
+        set(v) = plain.edit().putString("device_voice", v).apply()
+
+    var yandexKey: String
+        get() = secure.getString("yandex_key", "") ?: ""
+        set(v) = secure.edit().putString("yandex_key", v.trim()).apply()
+
+    var yandexVoice: String
+        get() = plain.getString("yandex_voice", "filipp") ?: "filipp"
+        set(v) = plain.edit().putString("yandex_voice", v.trim().ifEmpty { "filipp" }).apply()
+
+    var googleTtsKey: String
+        get() = secure.getString("google_tts_key", "") ?: ""
+        set(v) = secure.edit().putString("google_tts_key", v.trim()).apply()
+
+    var googleVoice: String
+        get() = plain.getString("google_voice", "ru-RU-Wavenet-D") ?: "ru-RU-Wavenet-D"
+        set(v) = plain.edit().putString("google_voice", v.trim().ifEmpty { "ru-RU-Wavenet-D" }).apply()
+
+    /** Отправлять сообщение коучу сразу после диктовки. */
+    var voiceAutoSend: Boolean
+        get() = plain.getBoolean("voice_autosend", true)
+        set(v) = plain.edit().putBoolean("voice_autosend", v).apply()
+
+    /** Счётчик облачной озвучки за текущий месяц (для оценки стоимости). */
+    fun cloudCharsThisMonth(engine: String): Int {
+        val m = java.time.YearMonth.now().toString()
+        return if (plain.getString("tts_month_$engine", "") == m) plain.getInt("tts_chars_$engine", 0) else 0
+    }
+
+    fun addCloudChars(engine: String, n: Int) {
+        val m = java.time.YearMonth.now().toString()
+        val cur = cloudCharsThisMonth(engine)
+        plain.edit().putString("tts_month_$engine", m).putInt("tts_chars_$engine", cur + n).apply()
+    }
+
     var screeningPassed: Boolean
         get() = plain.getBoolean("screening_passed", false)
         set(v) = plain.edit().putBoolean("screening_passed", v).apply()

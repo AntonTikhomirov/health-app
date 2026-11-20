@@ -165,3 +165,42 @@ data class GarminActivity(
     val kcal: Int?,
     val trainingLoad: Double?,
 )
+
+/**
+ * Анализы: один загруженный документ (PDF или фото бланка) = один отчёт.
+ * day — дата взятия материала (из бланка), filePath — копия файла во внутренней памяти.
+ */
+@Entity(tableName = "lab_report", indices = [Index("day")])
+data class LabReport(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val day: Long,
+    val lab: String = "",
+    val title: String = "",
+    val filePath: String = "",
+    val mime: String = "",
+    val addedAt: Long = System.currentTimeMillis(),
+    val interpretation: String? = null,
+    val interpretedAt: Long? = null,
+)
+
+/**
+ * Один показатель. code — канонический ключ (glucose, ldl, tsh…), чтобы сводить разные лаборатории в динамику.
+ * value — число, если показатель числовой; valueText — как в бланке («отрицательно», «<0,5»).
+ * flag: L / H / N / ? (вне/в пределах референса, неизвестно).
+ */
+@Entity(tableName = "lab_result", indices = [Index("reportId"), Index("code"), Index("day")])
+data class LabResult(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val reportId: Long,
+    val day: Long,
+    val code: String,
+    val name: String,
+    val category: String = "Другое",
+    val value: Double? = null,
+    val valueText: String = "",
+    val unit: String = "",
+    val refLow: Double? = null,
+    val refHigh: Double? = null,
+    val refText: String = "",
+    val flag: String = "?",
+)

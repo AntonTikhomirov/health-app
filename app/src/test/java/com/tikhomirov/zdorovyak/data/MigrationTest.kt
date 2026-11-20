@@ -31,4 +31,17 @@ class MigrationTest {
         val f = db.query("SELECT COUNT(*) FROM food"); f.moveToFirst()
         assertEquals(1, f.getInt(0))
     }
+
+    @Test fun migrate2to3() {
+        helper.createDatabase("m3.db", 2).apply {
+            execSQL("INSERT INTO weight (day, weightKg, bodyFatPct, note) VALUES (20000, 92.5, NULL, '')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("m3.db", 3, true, AppDatabase.MIGRATION_2_3)
+        val w = db.query("SELECT COUNT(*) FROM weight"); w.moveToFirst()
+        assertEquals(1, w.getInt(0))
+        db.execSQL("INSERT INTO lab_report (day, lab, title, filePath, mime, addedAt) VALUES (20400, 'Инвитро', 'Биохимия', '', 'application/pdf', 1)")
+        val r = db.query("SELECT COUNT(*) FROM lab_result"); r.moveToFirst()
+        assertEquals(0, r.getInt(0))
+    }
 }

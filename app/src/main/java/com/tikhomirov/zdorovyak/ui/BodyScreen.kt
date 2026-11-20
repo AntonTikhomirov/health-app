@@ -29,13 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tikhomirov.zdorovyak.data.Measurement
 import com.tikhomirov.zdorovyak.data.WeightEntry
 import com.tikhomirov.zdorovyak.ui.theme.Z
 import kotlinx.coroutines.launch
 
 @Composable
-fun BodyScreen(modifier: Modifier, quick: Quick?, consumeQuick: () -> Unit) {
+fun BodyScreen(modifier: Modifier, quick: Quick?, onOpenLabs: () -> Unit = {}, consumeQuick: () -> Unit) {
     val app = LocalApp.current
     val scope = rememberCoroutineScope()
     val profile by app.settings.profile.collectAsState()
@@ -43,6 +44,8 @@ fun BodyScreen(modifier: Modifier, quick: Quick?, consumeQuick: () -> Unit) {
     val measurements by app.db.body().measurements().collectAsState(initial = emptyList())
     var weightDialog by remember { mutableStateOf(false) }
     var measureDialog by remember { mutableStateOf(false) }
+    val labReports by app.db.labs().reports().collectAsState(initial = emptyList())
+    val labResults by app.db.labs().results().collectAsState(initial = emptyList())
 
     LaunchedEffect(quick) { if (quick == Quick.WEIGHT) { weightDialog = true; consumeQuick() } }
 
@@ -81,6 +84,22 @@ fun BodyScreen(modifier: Modifier, quick: Quick?, consumeQuick: () -> Unit) {
                             m.neck?.let { "шея ${it.r1()}" }).joinToString(" · "), Modifier.weight(1f).padding(horizontal = 8.dp))
                         IconButton(onClick = { scope.launch { app.db.body().deleteMeasurement(m) } }) { Icon(Icons.Filled.Delete, "Удалить", tint = Z.Muted) }
                     }
+                }
+            }
+        }
+        item {
+            ZCard(accent = Z.Blue) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Анализы", fontWeight = FontWeight.SemiBold)
+                    OutlinedButton(onClick = onOpenLabs) { Text(if (labReports.isEmpty()) "Загрузить" else "Открыть") }
+                }
+                val last = labReports.firstOrNull()
+                if (last == null) Muted("PDF из лаборатории → таблица с динамикой и разбор ИИ. Не диагноз, а подготовка к разговору с врачом.")
+                else {
+                    val rows = com.tikhomirov.zdorovyak.labs.LabTable.rows(labResults)
+                    val out = rows.filter { it.latest.flag == "H" || it.latest.flag == "L" }
+                    Muted("Последний: ${dayLabel(last.day)}${if (last.lab.isNotBlank()) " · ${last.lab}" else ""} · показателей ${rows.size}")
+                    if (out.isNotEmpty()) Text("Вне нормы: " + out.take(4).joinToString { it.name } + if (out.size > 4) " и ещё ${out.size - 4}" else "", color = Z.Orange, fontSize = 13.sp)
                 }
             }
         }
