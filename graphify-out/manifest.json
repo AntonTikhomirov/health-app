@@ -1,0 +1,194 @@
+{
+  "app/build.gradle.kts": {
+    "mtime": 1795170512.1957002,
+    "seen": 1795170742.6220486,
+    "ast_hash": "c84cebdbb7f9f89ec3e14f534ce8c1c3",
+    "semantic_hash": "c84cebdbb7f9f89ec3e14f534ce8c1c3"
+  },
+  "app/schemas/com.tikhomirov.zdorovyak.data.AppDatabase/1.json": {
+    "mtime": 1795170512.1964865,
+    "seen": 1795170742.6220546,
+    "ast_hash": "55c71eb6256a610cd007f12ee85434c1",
+    "semantic_hash": "55c71eb6256a610cd007f12ee85434c1"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/App.kt": {
+    "mtime": 1795170512.1967456,
+    "seen": 1795170742.6220574,
+    "ast_hash": "c6dd0e59e23cf59fe8c4b6ab5dc85ae8",
+    "semantic_hash": "c6dd0e59e23cf59fe8c4b6ab5dc85ae8"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/MainActivity.kt": {
+    "mtime": 1795170512.1968222,
+    "seen": 1795170742.6220593,
+    "ast_hash": "84ebb103bed27b0a3f6bd57d53d4a92c",
+    "semantic_hash": "84ebb103bed27b0a3f6bd57d53d4a92c"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ai/ClaudeClient.kt": {
+    "mtime": 1795170512.1968222,
+    "seen": 1795170742.6220605,
+    "ast_hash": "0b73157bf92bb4f43010997484980446",
+    "semantic_hash": "0b73157bf92bb4f43010997484980446"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/coach/CoachRepo.kt": {
+    "mtime": 1795170512.1968222,
+    "seen": 1795170742.6220617,
+    "ast_hash": "91888545f1be88b7481dc587d65be2f1",
+    "semantic_hash": "91888545f1be88b7481dc587d65be2f1"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/data/Database.kt": {
+    "mtime": 1795170512.1968222,
+    "seen": 1795170742.622063,
+    "ast_hash": "9272a57c13c2bb791e4845ea25901aed",
+    "semantic_hash": "9272a57c13c2bb791e4845ea25901aed"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/data/Entities.kt": {
+    "mtime": 1795170512.197188,
+    "seen": 1795170742.6220639,
+    "ast_hash": "9be67723a1f969ece1e48b0364c60693",
+    "semantic_hash": "9be67723a1f969ece1e48b0364c60693"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/data/Settings.kt": {
+    "mtime": 1795170512.197188,
+    "seen": 1795170742.6220646,
+    "ast_hash": "4c26caab0873dfee38a0bc322092f8c0",
+    "semantic_hash": "4c26caab0873dfee38a0bc322092f8c0"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/garmin/GarminClient.kt": {
+    "mtime": 1795170512.197188,
+    "seen": 1795170742.622066,
+    "ast_hash": "0b58ba98f68dbef5a134dd9ae1bf3928",
+    "semantic_hash": "0b58ba98f68dbef5a134dd9ae1bf3928"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/garmin/GarminSyncWorker.kt": {
+    "mtime": 1795170512.197484,
+    "seen": 1795170742.622067,
+    "ast_hash": "52746b8cea98321711e456fce2db02db",
+    "semantic_hash": "52746b8cea98321711e456fce2db02db"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/nutrition/NutritionRepo.kt": {
+    "mtime": 1795170512.197484,
+    "seen": 1795170742.622068,
+    "ast_hash": "8f1eb910b872064e803db49eb7fb41de",
+    "semantic_hash": "8f1eb910b872064e803db49eb7fb41de"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/strength/Catalog.kt": {
+    "mtime": 1795170512.197484,
+    "seen": 1795170742.622069,
+    "ast_hash": "ebdf644c6dc4664a53ba55937d727980",
+    "semantic_hash": "ebdf644c6dc4664a53ba55937d727980"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/strength/Engine.kt": {
+    "mtime": 1795170512.1977527,
+    "seen": 1795170742.6220703,
+    "ast_hash": "fcc5d38daab67d9f3dbd1f798851c95e",
+    "semantic_hash": "fcc5d38daab67d9f3dbd1f798851c95e"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/strength/TrainingRepo.kt": {
+    "mtime": 1795170512.1977527,
+    "seen": 1795170742.6220713,
+    "ast_hash": "90b352a48298455faf38d5d35ea0cd8d",
+    "semantic_hash": "90b352a48298455faf38d5d35ea0cd8d"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/AppRoot.kt": {
+    "mtime": 1795170512.1977527,
+    "seen": 1795170742.622072,
+    "ast_hash": "fad61b1a5853889d47a682763cae0a0e",
+    "semantic_hash": "fad61b1a5853889d47a682763cae0a0e"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/BodyScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.622073,
+    "ast_hash": "3988e1681c64f2700983b2f69b574287",
+    "semantic_hash": "3988e1681c64f2700983b2f69b574287"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/CoachScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220737,
+    "ast_hash": "6b4cf262066ef912c954572d79165efc",
+    "semantic_hash": "6b4cf262066ef912c954572d79165efc"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/Common.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220744,
+    "ast_hash": "56652e91e25778a99c14026cdef1c7b1",
+    "semantic_hash": "56652e91e25778a99c14026cdef1c7b1"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/NutritionScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220753,
+    "ast_hash": "073031d515fd330ec56393843d308ee4",
+    "semantic_hash": "073031d515fd330ec56393843d308ee4"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/SettingsScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220763,
+    "ast_hash": "1e6c7d01937a82b293f7cb972c16f70d",
+    "semantic_hash": "1e6c7d01937a82b293f7cb972c16f70d"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/TodayScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.622077,
+    "ast_hash": "cbddd0ae9fa8e901e689d8d201c1fb53",
+    "semantic_hash": "cbddd0ae9fa8e901e689d8d201c1fb53"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/TrainingScreen.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220782,
+    "ast_hash": "2fdb52f9d41304cc780f1813e3835c31",
+    "semantic_hash": "2fdb52f9d41304cc780f1813e3835c31"
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/theme/Theme.kt": {
+    "mtime": 1795170512.1980624,
+    "seen": 1795170742.6220791,
+    "ast_hash": "a8c6900e42f926f3df294c85e417ef46",
+    "semantic_hash": "a8c6900e42f926f3df294c85e417ef46"
+  },
+  "app/src/test/java/com/tikhomirov/zdorovyak/strength/EngineTest.kt": {
+    "mtime": 1795170512.1989896,
+    "seen": 1795170742.6220803,
+    "ast_hash": "58bdb0b9fbe2b24ec9ec28139278a8fe",
+    "semantic_hash": "58bdb0b9fbe2b24ec9ec28139278a8fe"
+  },
+  "app/src/test/java/com/tikhomirov/zdorovyak/ui/SmokeTest.kt": {
+    "mtime": 1795170512.1989896,
+    "seen": 1795170742.6220813,
+    "ast_hash": "3cacab498123305e4b6f00107b7f1935",
+    "semantic_hash": "3cacab498123305e4b6f00107b7f1935"
+  },
+  "build.gradle.kts": {
+    "mtime": 1795170512.1989896,
+    "seen": 1795170742.6220822,
+    "ast_hash": "d8137176844fa5eb0e598b3091182e2e",
+    "semantic_hash": "d8137176844fa5eb0e598b3091182e2e"
+  },
+  "gradlew": {
+    "mtime": 1795170512.1994784,
+    "seen": 1795170742.6220834,
+    "ast_hash": "794669d78aef1dd5c7d889ef618b311a",
+    "semantic_hash": "794669d78aef1dd5c7d889ef618b311a"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1795170512.1994784,
+    "seen": 1795170742.6220844,
+    "ast_hash": "f3ea2355e73bb7a7d35c9a69a7724474",
+    "semantic_hash": "f3ea2355e73bb7a7d35c9a69a7724474"
+  },
+  "README.md": {
+    "mtime": 1795170512.1957002,
+    "seen": 1795170742.622085,
+    "ast_hash": "b78d4c3a3706f1409f1dc6eedbeb86da",
+    "semantic_hash": "b78d4c3a3706f1409f1dc6eedbeb86da"
+  },
+  "docs/research/jogjoy-training-engine.md": {
+    "mtime": 1795170552.9325345,
+    "seen": 1795170742.6220858,
+    "ast_hash": "59f0ed6e7446175af1765c83d4db55f2",
+    "semantic_hash": "59f0ed6e7446175af1765c83d4db55f2"
+  },
+  "docs/research/strength-module-spec.md": {
+    "mtime": 1795170552.9330304,
+    "seen": 1795170742.6220868,
+    "ast_hash": "f49aad345b14a5b5f91befe3df65bf5c",
+    "semantic_hash": "f49aad345b14a5b5f91befe3df65bf5c"
+  }
+}
