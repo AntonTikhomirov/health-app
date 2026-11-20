@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Zdorovyak" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0E110F</item>
+        <item name="android:statusBarColor">#0E110F</item>
+        <item name="android:navigationBarColor">#0E110F</item>
+    </style>
+</resources>
