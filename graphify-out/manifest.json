@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1795184333.595762,
-    "seen": 1795184672.0882263,
-    "ast_hash": "2156eaf422ec8059563aa29435bc37fb",
+    "mtime": 1795232794.1082194,
+    "seen": 1795233569.0775807,
+    "ast_hash": "51a154b502d82b447e20c6cc9a1a6702",
     "semantic_hash": ""
   },
   "app/schemas/com.tikhomirov.zdorovyak.data.AppDatabase/1.json": {
@@ -12,15 +12,15 @@
     "semantic_hash": ""
   },
   "app/schemas/com.tikhomirov.zdorovyak.data.AppDatabase/2.json": {
-    "mtime": 1795183970.806804,
-    "seen": 1795184672.0882385,
+    "mtime": 1795232204.1159143,
+    "seen": 1795233569.0775926,
     "ast_hash": "346b6f02759e2ece3b8ae84c9867c6e9",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/App.kt": {
-    "mtime": 1795184333.5891469,
-    "seen": 1795184672.0882432,
-    "ast_hash": "c215fa0546d8d5a25ae474817f1e87f5",
+    "mtime": 1795232473.8629317,
+    "seen": 1795233569.0775998,
+    "ast_hash": "994ca2738da3c9d73e8a8111f88c9e8d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/MainActivity.kt": {
@@ -30,33 +30,33 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ai/ClaudeClient.kt": {
-    "mtime": 1795184112.109791,
-    "seen": 1795184672.0882475,
+    "mtime": 1795232204.1199143,
+    "seen": 1795233569.0776033,
     "ast_hash": "22bbbbab760c0dfa57f91dd53d61eb90",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/coach/CoachRepo.kt": {
-    "mtime": 1795184221.5734298,
-    "seen": 1795184672.0882504,
+    "mtime": 1795232204.1199143,
+    "seen": 1795233569.0776067,
     "ast_hash": "87f4199a95d42d1981cc5f226c8edf53",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/data/Database.kt": {
-    "mtime": 1795184132.773867,
-    "seen": 1795184672.0882523,
-    "ast_hash": "982c36cae1f34c2ebf0d0092b139d9c0",
+    "mtime": 1795232432.6887465,
+    "seen": 1795233569.077608,
+    "ast_hash": "ba7308d47e84cd95ffac5b9eb91da555",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/data/Entities.kt": {
-    "mtime": 1795184118.8748128,
-    "seen": 1795184672.0882542,
-    "ast_hash": "c7248d419883394eed5169615f3d67c7",
+    "mtime": 1795232432.688081,
+    "seen": 1795233569.07761,
+    "ast_hash": "cd827ebfde383d74150f9a222a4135ce",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/data/Settings.kt": {
-    "mtime": 1795184257.5563726,
-    "seen": 1795184672.0882554,
-    "ast_hash": "140fece70f8120197008f200845deab7",
+    "mtime": 1795232432.6891925,
+    "seen": 1795233569.0776112,
+    "ast_hash": "4bf4a926ec6d22020b49a1561ea00c43",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/garmin/GarminClient.kt": {
@@ -72,20 +72,20 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/nutrition/FoodBase.kt": {
-    "mtime": 1795183970.806804,
-    "seen": 1795184672.0882628,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776186,
     "ast_hash": "6c0209ee1827892ad503a79c27ddb101",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/nutrition/NutritionRepo.kt": {
-    "mtime": 1795184118.868113,
-    "seen": 1795184672.0882642,
-    "ast_hash": "ebcce6f8754f7c0e2674348d6e4f7017",
+    "mtime": 1795232741.1179953,
+    "seen": 1795233569.0776198,
+    "ast_hash": "9484826f0c93c59ddc8cbc950538e183",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/nutrition/Targets.kt": {
-    "mtime": 1795183970.806804,
-    "seen": 1795184672.0882657,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.077622,
     "ast_hash": "b0f0dfb92c4526824ba1ac898d326d0f",
     "semantic_hash": ""
   },
@@ -102,80 +102,80 @@
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/strength/TrainingRepo.kt": {
-    "mtime": 1795170511.9674864,
-    "seen": 1795173369.722538,
-    "ast_hash": "90b352a48298455faf38d5d35ea0cd8d",
+    "mtime": 1795232455.9066017,
+    "seen": 1795233569.0776277,
+    "ast_hash": "cb04311b42dc63014633b78091008d64",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/AppRoot.kt": {
-    "mtime": 1795184433.9836955,
-    "seen": 1795184672.088272,
-    "ast_hash": "7a82b5c1ff6361e7b52b6cebb074a802",
+    "mtime": 1795233475.8653367,
+    "seen": 1795233569.0776286,
+    "ast_hash": "810b562ada66ba265cc75420a06f89a8",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/BodyScreen.kt": {
-    "mtime": 1795184433.9831097,
-    "seen": 1795184672.0882738,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776293,
     "ast_hash": "407ef8748a78b2281eeabdc072c671c1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/CoachScreen.kt": {
-    "mtime": 1795184357.50077,
-    "seen": 1795184672.0882757,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776308,
     "ast_hash": "a94adc19435cb74f30b91e7cad6416ee",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/Common.kt": {
-    "mtime": 1795170511.9677167,
-    "seen": 1795173369.7225418,
-    "ast_hash": "56652e91e25778a99c14026cdef1c7b1",
+    "mtime": 1795232342.1957502,
+    "seen": 1795233569.077632,
+    "ast_hash": "b1a357f106dec31c883c1d0c4984294d",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/NutritionScreen.kt": {
-    "mtime": 1795183970.8108041,
-    "seen": 1795184672.088282,
-    "ast_hash": "65c57c9f976c91659815388c4e31ac18",
+    "mtime": 1795233414.4490256,
+    "seen": 1795233569.0776348,
+    "ast_hash": "3fce2bf52c80bb1f323266eab07f15ff",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/SettingsScreen.kt": {
-    "mtime": 1795184452.1986196,
-    "seen": 1795184672.088284,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776372,
     "ast_hash": "a7ddb89f0675c60d81bec44c7a8a24d8",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/TodayScreen.kt": {
-    "mtime": 1795170511.9677167,
-    "seen": 1795173369.7225451,
-    "ast_hash": "cbddd0ae9fa8e901e689d8d201c1fb53",
+    "mtime": 1795232610.0694833,
+    "seen": 1795233569.0776384,
+    "ast_hash": "6fce34a0e0e369978253814d932e447b",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/TrainingScreen.kt": {
-    "mtime": 1795170511.9677167,
-    "seen": 1795173369.722546,
-    "ast_hash": "2fdb52f9d41304cc780f1813e3835c31",
+    "mtime": 1795233475.85599,
+    "seen": 1795233569.0776408,
+    "ast_hash": "e43339491d320cd16b33855304726736",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/theme/Theme.kt": {
-    "mtime": 1795170511.9677167,
-    "seen": 1795173369.7225473,
-    "ast_hash": "a8c6900e42f926f3df294c85e417ef46",
+    "mtime": 1795232328.4119217,
+    "seen": 1795233569.0776417,
+    "ast_hash": "c2a0aa94c01a4ca98866137aaa0dc167",
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/data/MigrationTest.kt": {
-    "mtime": 1795184516.1188605,
-    "seen": 1795184672.0883002,
-    "ast_hash": "942ea9d143e0c300d1703c9ef9e84499",
+    "mtime": 1795232875.2979639,
+    "seen": 1795233569.0776472,
+    "ast_hash": "5ffa79f6b1c344f64a8d498a81381d49",
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/nutrition/FoodBaseTest.kt": {
-    "mtime": 1795183970.8108041,
-    "seen": 1795184672.088304,
+    "mtime": 1795232204.1234338,
+    "seen": 1795233569.077649,
     "ast_hash": "a81ad3ca31c16daff8530c8f50e22058",
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/nutrition/TargetsTest.kt": {
-    "mtime": 1795183970.8118746,
-    "seen": 1795184672.0883062,
+    "mtime": 1795232204.1237972,
+    "seen": 1795233569.0776515,
     "ast_hash": "f97f25c11acc71017baffde83f284fd4",
     "semantic_hash": ""
   },
@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/ui/SmokeTest.kt": {
-    "mtime": 1795184602.8817818,
-    "seen": 1795184672.0883102,
-    "ast_hash": "e190df390e20321c6a4f50b263dacf6d",
+    "mtime": 1795233475.8628862,
+    "seen": 1795233569.0776548,
+    "ast_hash": "4859fdd557694d1cf20663b7977a02b8",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -204,87 +204,147 @@
     "semantic_hash": ""
   },
   "settings.gradle.kts": {
-    "mtime": 1795183970.814804,
-    "seen": 1795184672.0883183,
+    "mtime": 1795232204.1279144,
+    "seen": 1795233569.0776598,
     "ast_hash": "0e69642d8b1d9afddf564da357b672de",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1795184665.9068453,
-    "seen": 1795184672.0883207,
-    "ast_hash": "9060226b8b1b38fd5dd33bbbbb53ca92",
+    "mtime": 1795233566.0149431,
+    "seen": 1795233569.077661,
+    "ast_hash": "e8ad3bea2c2b69d1b4c4b11f193d2d45",
     "semantic_hash": ""
   },
   "docs/research/nutrition-improvements-plan.md": {
-    "mtime": 1795183970.8123143,
-    "seen": 1795184672.0883226,
+    "mtime": 1795232204.1241064,
+    "seen": 1795233569.0776649,
     "ast_hash": "12d2b96fc9253f4ce3d3a2b92cbcb1f7",
     "semantic_hash": ""
   },
   "app/schemas/com.tikhomirov.zdorovyak.data.AppDatabase/3.json": {
-    "mtime": 1795184283.7188227,
-    "seen": 1795184672.0882406,
+    "mtime": 1795232204.1159143,
+    "seen": 1795233569.0775957,
     "ast_hash": "0b6020c45444c83b6463aa35cbf8edc7",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ai/Images.kt": {
-    "mtime": 1795184112.1167033,
-    "seen": 1795184672.0882487,
+    "mtime": 1795232204.1199143,
+    "seen": 1795233569.0776048,
     "ast_hash": "6a07cb3c5073f4847a287fac2318d788",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/labs/LabParser.kt": {
-    "mtime": 1795184212.3428183,
-    "seen": 1795184672.0882602,
+    "mtime": 1795232204.1199143,
+    "seen": 1795233569.077616,
     "ast_hash": "a861228dcbb78fbbd0e279b35ef8c8c7",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/labs/LabsRepo.kt": {
-    "mtime": 1795184221.5938184,
-    "seen": 1795184672.0882614,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776174,
     "ast_hash": "2063e6391bb602769a8a09c45d373fd1",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/ui/LabsScreen.kt": {
-    "mtime": 1795184421.5045693,
-    "seen": 1795184672.08828,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776336,
     "ast_hash": "96fdef870bdc1a5a6d8a64f89b16a246",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/voice/CloudTts.kt": {
-    "mtime": 1795184282.1284218,
-    "seen": 1795184672.0882914,
+    "mtime": 1795232204.1216283,
+    "seen": 1795233569.0776427,
     "ast_hash": "5d98c5de457e54c06747d4bcfeee3829",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/voice/Speaker.kt": {
-    "mtime": 1795184333.5693111,
-    "seen": 1795184672.0882952,
+    "mtime": 1795232204.1234338,
+    "seen": 1795233569.0776439,
     "ast_hash": "c775344c4fed5925161e1cdf3183bb19",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/voice/TtsText.kt": {
-    "mtime": 1795184282.1244025,
-    "seen": 1795184672.088297,
+    "mtime": 1795232204.1234338,
+    "seen": 1795233569.077645,
     "ast_hash": "ab7f9106a543f54989b21a3e053ce509",
     "semantic_hash": ""
   },
   "app/src/main/java/com/tikhomirov/zdorovyak/voice/VoiceInput.kt": {
-    "mtime": 1795184333.5740776,
-    "seen": 1795184672.0882986,
+    "mtime": 1795232204.1234338,
+    "seen": 1795233569.077646,
     "ast_hash": "9030ab1aa897cc45e021de6e2d3c1e0d",
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/labs/LabParserTest.kt": {
-    "mtime": 1795184516.125713,
-    "seen": 1795184672.0883021,
+    "mtime": 1795232204.1234338,
+    "seen": 1795233569.0776482,
     "ast_hash": "6978b02d37f5f7714b80ee9ae7b3b20a",
     "semantic_hash": ""
   },
   "app/src/test/java/com/tikhomirov/zdorovyak/voice/TtsTextTest.kt": {
-    "mtime": 1795184516.1268365,
-    "seen": 1795184672.0883121,
+    "mtime": 1795232204.1239142,
+    "seen": 1795233569.0776558,
     "ast_hash": "b35ae0a26ab42685dc9cde8002105c53",
+    "semantic_hash": ""
+  },
+  "app/schemas/com.tikhomirov.zdorovyak.data.AppDatabase/4.json": {
+    "mtime": 1795232804.7439501,
+    "seen": 1795233569.0775979,
+    "ast_hash": "bf45142fb22f8cf152b87188cb516e87",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/nutrition/Portions.kt": {
+    "mtime": 1795232980.563723,
+    "seen": 1795233569.0776207,
+    "ast_hash": "d70f9a1f8cdad367add3c4d7061b6610",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/strength/Schedule.kt": {
+    "mtime": 1795232421.9961402,
+    "seen": 1795233569.0776253,
+    "ast_hash": "9b7fb502033a2098ff0bc4a7b2fc689e",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/strength/TrainingReminder.kt": {
+    "mtime": 1795232473.8269427,
+    "seen": 1795233569.0776265,
+    "ast_hash": "7760b5fae226e52c6787921cf1c85184",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/Rings.kt": {
+    "mtime": 1795232389.0138433,
+    "seen": 1795233569.0776358,
+    "ast_hash": "a9f8a5b429067192188dda7db7996d60",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/com/tikhomirov/zdorovyak/ui/TrainingCalendar.kt": {
+    "mtime": 1795232579.951699,
+    "seen": 1795233569.0776393,
+    "ast_hash": "7f2aac4d4a738195c158d0afd59427e2",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/com/tikhomirov/zdorovyak/nutrition/PortionsTest.kt": {
+    "mtime": 1795232875.2849896,
+    "seen": 1795233569.07765,
+    "ast_hash": "2f08df10ba63b3e9499f158ab3d1ff2f",
+    "semantic_hash": ""
+  },
+  "app/src/test/java/com/tikhomirov/zdorovyak/strength/ScheduleTest.kt": {
+    "mtime": 1795232875.2835925,
+    "seen": 1795233569.0776534,
+    "ast_hash": "ac8e4c736c4d005f89ae12a661e30de2",
+    "semantic_hash": ""
+  },
+  "docs/licenses/OFL-Inter.txt": {
+    "mtime": 1795233544.8428996,
+    "seen": 1795233569.077662,
+    "ast_hash": "5e95cb23ed621124015c5d23224ba2d3",
+    "semantic_hash": ""
+  },
+  "docs/licenses/OFL-Manrope.txt": {
+    "mtime": 1795233544.5065937,
+    "seen": 1795233569.0776632,
+    "ast_hash": "a216ac8723e9b95b204d3bc619ebcabd",
     "semantic_hash": ""
   }
 }

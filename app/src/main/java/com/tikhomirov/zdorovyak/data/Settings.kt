@@ -31,10 +31,17 @@ data class Profile(
     val autoTargets: Boolean = true,
     val experience: String = "небольшой",
     val trainingDays: Int = 3,
+    /** Дни силовых, ISO: 1 — понедельник … 7 — воскресенье. Пусто — ещё не выбирали (берём по trainingDays). */
+    val trainingWeekdays: List<Int> = emptyList(),
+    /** Напоминание в день тренировки, час (0–23); -1 — выключено. */
+    val remindHour: Int = 18,
     val sessionMinutes: Int = 50,
     val limitations: String = "",
     val inventory: Inventory = Inventory(),
-)
+) {
+    /** Дни тренировок с учётом старых профилей, где выбирали только «сколько раз в неделю». */
+    val weekdays: Set<Int> get() = trainingWeekdays.ifEmpty { com.tikhomirov.zdorovyak.strength.Schedule.defaultFor(trainingDays) }.toSet()
+}
 
 /** Состояние адаптивного расхода: текущая оценка, когда пересчитывали, пояснение для экрана. */
 @Serializable

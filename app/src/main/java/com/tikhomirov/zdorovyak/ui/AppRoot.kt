@@ -47,6 +47,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tikhomirov.zdorovyak.App
 import com.tikhomirov.zdorovyak.ui.theme.Z
+import com.tikhomirov.zdorovyak.ui.theme.Manrope
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 
 val LocalApp = staticCompositionLocalOf<App> { error("no app") }
@@ -61,7 +67,7 @@ enum class Tab(val title: String, val icon: ImageVector) {
 }
 
 /** Действия быстрого ввода, которые экраны подхватывают при открытии. */
-enum class Quick { WEIGHT, FOOD_MANUAL, FOOD_BARCODE, FOOD_PHOTO, OTHER_ACTIVITY }
+enum class Quick { WEIGHT, FOOD_MANUAL, FOOD_BARCODE, FOOD_PHOTO, FOOD_PHRASE, OTHER_ACTIVITY }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,28 +107,41 @@ fun AppRoot(app: App) {
             WorkoutScreen(onClose = { workoutOpen = false; tab = Tab.TRAINING })
             return@CompositionLocalProvider
         }
+        // Фон: тёмный, с едва заметным свечением цвета текущей вкладки в левом верхнем углу
+        val glow = when (tab) { Tab.FOOD -> Z.Lime; Tab.TRAINING -> Z.Orange; Tab.BODY -> Z.Carbs; Tab.COACH -> Z.Protein; Tab.TODAY -> Z.Lime }
         Scaffold(
-            containerColor = Z.Bg,
+            modifier = Modifier.background(Z.Bg).drawBehind {
+                drawRect(Brush.radialGradient(listOf(glow.copy(alpha = 0.10f), Color.Transparent),
+                    center = Offset(size.width * 0.1f, 0f), radius = size.width * 1.1f))
+            },
+            containerColor = Color.Transparent,
+            contentColor = Z.Text,   // прозрачный фон не даёт цвета текста по умолчанию — задаём явно
             snackbarHost = { SnackbarHost(snack) },
             topBar = {
                 TopAppBar(
-                    title = { Text(if (tab == Tab.TODAY) "Здоровяк" else tab.title, fontWeight = FontWeight.Bold) },
-                    actions = { IconButton(onClick = { settingsOpen = true }) { Icon(Icons.Filled.Settings, "Настройки") } },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Z.Bg),
+                    title = {
+                        Text(if (tab == Tab.TODAY) "Здоровяк" else tab.title, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp, letterSpacing = (-0.3).sp)
+                    },
+                    actions = { IconButton(onClick = { settingsOpen = true }) { Icon(Icons.Filled.Settings, "Настройки", tint = Z.Muted) } },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 )
             },
             floatingActionButton = {
-                if (tab != Tab.COACH) FloatingActionButton(onClick = { quickOpen = true }, containerColor = Z.Lime, contentColor = Z.Bg) {
+                if (tab != Tab.COACH) FloatingActionButton(onClick = { quickOpen = true }, containerColor = Z.Lime, contentColor = Z.Bg,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)) {
                     Icon(Icons.Filled.Add, "Быстрый ввод")
                 }
             },
             bottomBar = {
-                NavigationBar(containerColor = Z.Surface) {
+                NavigationBar(containerColor = Z.Surface, modifier = Modifier.drawBehind {
+                    drawLine(Z.Line, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx())
+                }) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t, onClick = { tab = t },
                             icon = { Icon(t.icon, t.title) },
-                            label = { Text(t.title, fontSize = 11.sp) },
+                            label = { Text(t.title, fontSize = 10.5.sp, maxLines = 1, softWrap = false, fontFamily = Manrope, fontWeight = FontWeight.Bold) },
                             colors = NavigationBarItemDefaults.colors(selectedIconColor = Z.Bg, indicatorColor = Z.Lime,
                                 selectedTextColor = Z.Lime, unselectedIconColor = Z.Muted, unselectedTextColor = Z.Muted),
                         )
@@ -142,8 +161,9 @@ fun AppRoot(app: App) {
         if (quickOpen) {
             ModalBottomSheet(onDismissRequest = { quickOpen = false }, containerColor = Z.Surface) {
                 Column(Modifier.fillMaxWidth().padding(16.dp, 0.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Быстрый ввод", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Быстрый ввод", fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                     fun go(q: Quick, t: Tab) { pendingQuick = q; tab = t; quickOpen = false }
+                    TextButton(onClick = { go(Quick.FOOD_PHRASE, Tab.FOOD) }) { Text("Еда голосом или фразой") }
                     TextButton(onClick = { go(Quick.FOOD_PHOTO, Tab.FOOD) }) { Text("Еда по фото") }
                     TextButton(onClick = { go(Quick.FOOD_BARCODE, Tab.FOOD) }) { Text("Еда по штрихкоду") }
                     TextButton(onClick = { go(Quick.FOOD_MANUAL, Tab.FOOD) }) { Text("Еда вручную") }

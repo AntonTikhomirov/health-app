@@ -24,6 +24,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.tikhomirov.zdorovyak.ui.theme.Manrope
 import com.tikhomirov.zdorovyak.ui.theme.Z
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -48,27 +57,46 @@ fun Double.r1(): String = ("%.1f".format(ru, this)).replace(',', '.').removeSuff
 
 @Composable
 fun ZCard(modifier: Modifier = Modifier, accent: Color? = null, content: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(24.dp)
+    // Мягкий градиент сверху вниз и едва заметный ободок акцентного цвета — карточки читаются как слои, а не рамки
+    val top = accent?.let { lerp(Z.Surface, it, 0.06f) } ?: Z.Surface2
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(Z.Surface)
-            .border(1.dp, accent?.copy(alpha = 0.35f) ?: Z.Line, RoundedCornerShape(18.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .clip(shape)
+            .background(Brush.verticalGradient(listOf(top, Z.Surface)))
+            .border(1.dp, Brush.verticalGradient(listOf(accent?.copy(alpha = 0.40f) ?: Z.Line, Z.Line.copy(alpha = 0.5f))), shape)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
         content = content,
     )
 }
 
+/** Заголовок карточки: иконка в цветном кружке, название и что-нибудь справа (кнопка, подпись). */
+@Composable
+fun CardHeader(title: String, icon: ImageVector?, accent: Color, trailing: (@Composable () -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        if (icon != null) {
+            Box(Modifier.size(30.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = accent, modifier = Modifier.size(17.dp))
+            }
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(title, Modifier.weight(1f), fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        trailing?.invoke()
+    }
+}
+
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) =
-    Text(text.uppercase(), modifier.padding(top = 8.dp, bottom = 2.dp), color = Z.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+    Text(text.uppercase(), modifier.padding(top = 10.dp, bottom = 2.dp), color = Z.Muted, fontSize = 11.sp, fontFamily = Manrope,
+        fontWeight = FontWeight.ExtraBold, letterSpacing = 1.4.sp)
 
 @Composable
-fun Big(text: String, color: Color = Z.Text) = Text(text, color = color, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+fun Big(text: String, color: Color = Z.Text) = Text(text, color = color, fontSize = 30.sp, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp)
 
 @Composable
-fun Muted(text: String, modifier: Modifier = Modifier) = Text(text, modifier, color = Z.Muted, fontSize = 13.sp)
+fun Muted(text: String, modifier: Modifier = Modifier) = Text(text, modifier, color = Z.Muted, fontSize = 13.sp, lineHeight = 18.sp)
 
 @Composable
 fun MacroBar(label: String, value: Double, target: Double, color: Color) {
@@ -111,7 +139,7 @@ fun Pill(text: String, color: Color) {
     Box(
         Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = 0.16f)).padding(horizontal = 10.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
-    ) { Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+    ) { Text(text, color = color, fontSize = 12.sp, fontFamily = Manrope, fontWeight = FontWeight.Bold) }
 }
 
 /** Простой линейный график (вес, сон и т.п.). Точки: (x по порядку, y). */

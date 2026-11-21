@@ -130,6 +130,15 @@ data class OtherActivity(
     val replacesWorkout: Boolean = false,
 )
 
+/** Отметка в календаре тренировок: сделал без записи / пропуск / уважительный пропуск / перенос. */
+@Entity(tableName = "training_mark")
+data class TrainingMark(
+    @PrimaryKey val day: Long,
+    val status: String,        // DONE / SKIPPED / EXCUSED / MOVED / EXTRA (strength.Mark)
+    val note: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
 @Entity(tableName = "chat")
 data class ChatMessage(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

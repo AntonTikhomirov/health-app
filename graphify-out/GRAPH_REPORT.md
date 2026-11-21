@@ -1,67 +1,72 @@
-# Graph Report - health-app  (2026-11-20)
+# Graph Report - health-app  (2026-11-21)
 
 ## Corpus Check
-- 48 files · ~41,976 words
+- 56 files · ~54,414 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 13 file(s) not represented in the graph (top: .xml 7, .properties 2, (none) 1)
+- Unclassified: 16 file(s) not represented in the graph (top: .xml 8, .ttf 2, .properties 2)
 
 ## Summary
-- 822 nodes · 2096 edges · 38 communities (26 shown, 12 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 161 edges (avg confidence: 0.85)
+- 988 nodes · 2645 edges · 50 communities (31 shown, 19 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 209 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4a25ef47`
+- Built from commit: `8ce96480`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- TrainingRepo.kt
-- NutritionScreen.kt
-- Common.kt
+- TrainingRepo
+- Text
 - TargetsTest
 - .progress
 - SmokeTest.kt
-- NutritionRepo.kt
 - GarminClient.kt
-- Settings
-- Msg
-- Engine.kt
-- GarminSyncWorker.kt
-- Speaker.kt
 - FoodItem
-- Muscle
+- Inventory
+- TrainingReminder.kt
+- Speaker.kt
+- TrainingScreen
 - Pattern
-- FoodBase
-- Joint
+- MigrationTest.kt
+- DayStatus
 - Query
 - RecognitionListener
 - Inventory
 - Tab
 - Database.kt
 - WeightEntry
-- FoodDao
 - GarminDao
 - LabParser
-- LabResult
+- Query
 - LabsRepo.kt
 - .progress
 - Entities.kt
-- Синхронизация Garmin (вручную и раз в 6 часов)
+- TodayScreen
+- AppRoot.kt
+- NutritionScreen
+- NutritionRings
+- .forName
+- CloudTts
+- AppRoot
+- Load
+- Quick
 
 ## God Nodes (most connected - your core abstractions)
-1. `AppDatabase` - 36 edges
-2. `Text` - 29 edges
-3. `NutritionScreen()` - 25 edges
-4. `TrainingDao` - 24 edges
-5. `FoodItem` - 24 edges
-6. `Settings` - 24 edges
-7. `LabResult` - 22 edges
-8. `NutritionRepo` - 20 edges
-9. `Muted()` - 20 edges
-10. `Msg` - 19 edges
+1. `Text` - 46 edges
+2. `AppDatabase` - 37 edges
+3. `TrainingDao` - 28 edges
+4. `FoodItem` - 28 edges
+5. `NutritionScreen()` - 28 edges
+6. `Settings` - 25 edges
+7. `NutritionRepo` - 25 edges
+8. `Muted()` - 24 edges
+9. `TrainingScreen()` - 24 edges
+10. `TodayScreen()` - 23 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `TodayScreen()` --implements--> `Раздел «Сегодня»`  [INFERRED]
+  app/src/main/java/com/tikhomirov/zdorovyak/ui/TodayScreen.kt → README.md
 - `AppDatabase` --implements--> `Здоровяк — личное приложение здоровья`  [INFERRED]
   app/src/main/java/com/tikhomirov/zdorovyak/data/Database.kt → README.md
 - `WeightEntry` --implements--> `Раздел «Тело» (вес, ИМТ, замеры)`  [INFERRED]
@@ -70,137 +75,155 @@
   docs/research/nutrition-improvements-plan.md → app/src/main/java/com/tikhomirov/zdorovyak/data/Entities.kt
 - `Measurement` --implements--> `Раздел «Тело» (вес, ИМТ, замеры)`  [INFERRED]
   app/src/main/java/com/tikhomirov/zdorovyak/data/Entities.kt → README.md
-- `FoodEntry` --implements--> `Раздел «Питание» (штрихкод, фото тарелки, справочник)`  [INFERRED]
-  app/src/main/java/com/tikhomirov/zdorovyak/data/Entities.kt → README.md
 
 ## Import Cycles
 - None detected.
 
-## Communities (38 total, 12 thin omitted)
+## Communities (50 total, 19 thin omitted)
 
-### Community 0 - "TrainingRepo.kt"
-Cohesion: 0.25
-Nodes (7): ExerciseStateEntity, SessionItem, SessionPlan, toEntity(), toModel(), TrainingRepo, ItemResult
+### Community 0 - "TrainingRepo"
+Cohesion: 0.18
+Nodes (3): ProgramEntity, TrainingMark, TrainingRepo
 
-### Community 2 - "Common.kt"
-Cohesion: 0.06
-Nodes (51): Text, LabRow, AppRoot(), Quick, FOOD_BARCODE, FOOD_MANUAL, FOOD_PHOTO, OTHER_ACTIVITY (+43 more)
+### Community 2 - "Text"
+Cohesion: 0.19
+Nodes (15): Text, BodyScreen(), CoachScreen(), Big(), CardHeader(), dayLabel(), MacroBar(), Muted() (+7 more)
 
 ### Community 3 - "TargetsTest"
-Cohesion: 0.09
-Nodes (17): Activity, HIGH, LIGHT, MODERATE, SEDENTARY, GoalMode, GAIN, LOSE (+9 more)
+Cohesion: 0.06
+Nodes (21): EnergyState, Profile, Settings, Activity, HIGH, LIGHT, MODERATE, SEDENTARY (+13 more)
 
 ### Community 4 - ".progress"
-Cohesion: 0.18
-Nodes (7): Engine, ExState, Feel, EASY, HARD, NORMAL, Outcome
-
-### Community 6 - "NutritionRepo.kt"
-Cohesion: 0.16
-Nodes (3): FoodSource, PhotoItem, PhotoResult
+Cohesion: 0.14
+Nodes (11): Engine, ExState, Feel, EASY, HARD, NORMAL, Outcome, SessionItem (+3 more)
 
 ### Community 7 - "GarminClient.kt"
-Cohesion: 0.13
-Nodes (5): AuthFailed, GarminException, login(), mobileLogin(), postJson()
+Cohesion: 0.14
+Nodes (8): AuthFailed, GarminException, GarminTokens, login(), mobileLogin(), postJson(), Синхронизация Garmin (вручную и раз в 6 часов), python-библиотека garminconnect
 
-### Community 8 - "Settings"
-Cohesion: 0.11
-Nodes (11): EnergyState, Profile, Settings, 1. Почему «автоматизация диетологии» сейчас не работает, 2. Что делают аналоги (что брать, что нет), 3. Рекомендация: формула норм, 4. Рекомендация: откуда брать данные о продуктах, 5. Приоритизированный список доработок (+3 more)
+### Community 9 - "FoodItem"
+Cohesion: 0.06
+Nodes (26): ClaudeClient, ClaudeException, Msg, CoachRepo, FoodItem, BaseFood, FoodBase, FoodOption (+18 more)
 
-### Community 9 - "Msg"
-Cohesion: 0.17
-Nodes (7): ClaudeClient, ClaudeException, Msg, CoachRepo, fmt(), Claude API, Раздел «Коуч» (чат с Claude, КПТ/коучинг)
+### Community 10 - "Inventory"
+Cohesion: 0.15
+Nodes (12): Inventory, Joint, ELBOW, HIP, KNEE, LOWER_BACK, SHOULDER, WRIST (+4 more)
 
-### Community 10 - "Engine.kt"
-Cohesion: 0.36
-Nodes (4): PlanDay, PlanExercise, PlanValidator, ProgramPlan
+### Community 11 - "TrainingReminder.kt"
+Cohesion: 0.08
+Nodes (3): App, GarminSyncWorker, TrainingReminder
 
 ### Community 12 - "Speaker.kt"
-Cohesion: 0.06
-Nodes (8): CloudTts, GoogleCloudTts, TtsException, YandexTts, Speaker, UtteranceProgressListener, TtsText, TtsTextTest
+Cohesion: 0.08
+Nodes (4): Speaker, UtteranceProgressListener, TtsText, TtsTextTest
 
-### Community 13 - "FoodItem"
-Cohesion: 0.20
-Nodes (7): FoodItem, FoodOption, NutritionRepo, BarcodeResult, short(), Open Food Facts, Раздел «Питание» (штрихкод, фото тарелки, справочник)
-
-### Community 14 - "Muscle"
-Cohesion: 0.18
-Nodes (11): Muscle, BACK, BICEPS, CALVES, CHEST, CORE, GLUTES, HAMSTRINGS (+3 more)
+### Community 13 - "TrainingScreen"
+Cohesion: 0.22
+Nodes (10): SectionTitle(), ScheduleDialog(), ScheduleHints(), WeekdayPicker(), CheckRow(), OtherActivityDialog(), ProgramSetup(), short() (+2 more)
 
 ### Community 15 - "Pattern"
 Cohesion: 0.18
 Nodes (11): Pattern, CARRY, CORE, HINGE, ISOLATION, LUNGE, PULL_H, PULL_V (+3 more)
 
-### Community 16 - "FoodBase"
-Cohesion: 0.10
-Nodes (4): BaseFood, FoodBase, MigrationTest, FoodBaseTest
-
-### Community 17 - "Joint"
-Cohesion: 0.22
-Nodes (7): Joint, ELBOW, HIP, KNEE, LOWER_BACK, SHOULDER, WRIST
+### Community 17 - "DayStatus"
+Cohesion: 0.09
+Nodes (17): CalDay, DayStatus, DONE, DONE_MANUAL, EXCUSED, MISSED, MOVED, PLANNED (+9 more)
 
 ### Community 18 - "Query"
-Cohesion: 0.13
-Nodes (3): TrainingDao, ProgramEntity, WorkoutEntity
+Cohesion: 0.14
+Nodes (3): TrainingDao, OtherActivity, WorkoutEntity
 
 ### Community 19 - "RecognitionListener"
-Cohesion: 0.08
-Nodes (4): MainActivity, ZTheme(), VoiceInput, RecognitionListener
+Cohesion: 0.06
+Nodes (5): MainActivity, variable(), ZTheme(), VoiceInput, RecognitionListener
 
 ### Community 20 - "Inventory"
-Cohesion: 0.10
-Nodes (18): Catalog, Equipment, BANDS, BARBELL, BENCH, DUMBBELLS, KETTLEBELL, MACHINES (+10 more)
+Cohesion: 0.09
+Nodes (22): Catalog, Equipment, BANDS, BARBELL, BENCH, DUMBBELLS, KETTLEBELL, MACHINES (+14 more)
 
 ### Community 21 - "Tab"
 Cohesion: 0.29
 Nodes (6): Tab, BODY, COACH, FOOD, TODAY, TRAINING
 
 ### Community 26 - "Database.kt"
-Cohesion: 0.14
-Nodes (4): AppDatabase, ChatDao, DayKcal, ChatMessage
+Cohesion: 0.15
+Nodes (3): AppDatabase, ChatDao, ChatMessage
 
 ### Community 27 - "WeightEntry"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (3): BodyDao, Measurement, WeightEntry
 
-### Community 30 - "LabParser"
-Cohesion: 0.14
-Nodes (6): LabParser, Parsed, LabTable, LabsRepo, ImportResult, LabParserTest
+### Community 29 - "GarminDao"
+Cohesion: 0.19
+Nodes (3): GarminDao, GarminActivity, GarminDay
 
-### Community 31 - "LabResult"
-Cohesion: 0.18
-Nodes (3): LabDao, LabReport, LabResult
+### Community 30 - "LabParser"
+Cohesion: 0.10
+Nodes (17): LabResult, LabParser, Parsed, LabRow, LabTable, LabsRepo, ImportResult, DynamicsTable() (+9 more)
+
+### Community 31 - "Query"
+Cohesion: 0.12
+Nodes (5): DayKcal, FoodDao, LabDao, FoodEntry, LabReport
 
 ### Community 32 - "LabsRepo.kt"
-Cohesion: 0.14
+Cohesion: 0.15
 Nodes (4): Part, Image, Pdf, Images
 
 ### Community 34 - "Entities.kt"
-Cohesion: 0.50
-Nodes (5): ExerciseFeedback, GarminActivity, GarminDay, OtherActivity, SetLog
+Cohesion: 0.22
+Nodes (4): ExerciseFeedback, ExerciseStateEntity, SetLog, toEntity()
 
-### Community 35 - "Синхронизация Garmin (вручную и раз в 6 часов)"
-Cohesion: 0.40
-Nodes (3): GarminTokens, Синхронизация Garmin (вручную и раз в 6 часов), python-библиотека garminconnect
+### Community 35 - "TodayScreen"
+Cohesion: 0.17
+Nodes (14): today(), dayName(), TodayScreen(), CalendarState, DayDot(), DaySheet(), DisciplineRow(), Legend() (+6 more)
+
+### Community 38 - "NutritionScreen"
+Cohesion: 0.24
+Nodes (9): TextField1(), defaultMeal(), FoodDialog(), FoodDraft, InputTile(), MealChips(), MealReviewDialog(), NutritionScreen() (+1 more)
+
+### Community 39 - "NutritionRings"
+Cohesion: 0.22
+Nodes (11): lerpWhite(), MacroRow(), Macros, MealSplitBar(), NutritionRings(), Over, FINE, WARN (+3 more)
+
+### Community 41 - ".forName"
+Cohesion: 0.33
+Nodes (3): Portion, Portions, PortionsTest
+
+### Community 44 - "CloudTts"
+Cohesion: 0.31
+Nodes (4): CloudTts, GoogleCloudTts, TtsException, YandexTts
+
+### Community 45 - "AppRoot"
+Cohesion: 0.25
+Nodes (6): AppRoot(), ChipRow(), SettingsScreen(), Здоровяк — личное приложение здоровья, Раздел «Сегодня», Раздел «Тело» (вес, ИМТ, замеры)
+
+### Community 46 - "Load"
+Cohesion: 0.29
+Nodes (7): Load, BAND, BARBELL, BODYWEIGHT, DUMBBELL, KETTLEBELL, MACHINE
+
+### Community 47 - "Quick"
+Cohesion: 0.29
+Nodes (7): Quick, FOOD_BARCODE, FOOD_MANUAL, FOOD_PHOTO, FOOD_PHRASE, OTHER_ACTIVITY, WEIGHT
 
 ## Knowledge Gaps
-- **64 isolated node(s):** `Image`, `Pdf`, `TODAY`, `FOOD`, `BODY` (+59 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 219 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **77 isolated node(s):** `DONE`, `DONE_MANUAL`, `REPLACED`, `SKIPPED`, `EXCUSED` (+72 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 251 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppDatabase` connect `Database.kt` to `TrainingRepo.kt`, `LabsRepo.kt`, `Entities.kt`, `Common.kt`, `NutritionRepo.kt`, `GarminClient.kt`, `Msg`, `GarminSyncWorker.kt`, `FoodItem`, `Query`, `WeightEntry`, `FoodDao`, `GarminDao`, `LabParser`, `LabResult`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
-- **Are the 28 inferred relationships involving `Text` (e.g. with `AppRoot()` and `BodyScreen()`) actually correct?**
-  _`Text` has 28 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Image`, `Pdf`, `TODAY` to the rest of the system?**
-  _64 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `NutritionScreen.kt` be split into smaller, more focused modules?**
-  _Cohesion score 0.05037481259370315 - nodes in this community are weakly interconnected._
-- **Why does `AppRoot()` connect `Common.kt` to `GarminSyncWorker.kt`, `NutritionScreen.kt`, `RecognitionListener`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
-- **Are the 12 inferred relationships involving `NutritionScreen()` (e.g. with `AppRoot()` and `Text`) actually correct?**
-  _`NutritionScreen()` has 12 INFERRED edges - model-reasoned connections that need verification._
-- **Should `Common.kt` be split into smaller, more focused modules?**
-  _Cohesion score 0.06205311542390194 - nodes in this community are weakly interconnected._
+- **Why does `AppDatabase` connect `Database.kt` to `TrainingRepo`, `LabsRepo.kt`, `Entities.kt`, `NutritionRepo.kt`, `GarminClient.kt`, `FoodItem`, `TrainingReminder.kt`, `AppRoot`, `Query`, `WeightEntry`, `GarminDao`, `LabParser`, `Query`?**
+  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+- **Are the 45 inferred relationships involving `Text` (e.g. with `AppRoot()` and `BodyScreen()`) actually correct?**
+  _`Text` has 45 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `DONE`, `DONE_MANUAL`, `REPLACED` to the rest of the system?**
+  _77 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `TrainingScreen.kt` be split into smaller, more focused modules?**
+  _Cohesion score 0.11219512195121951 - nodes in this community are weakly interconnected._
+- **Why does `Settings` connect `TargetsTest` to `LabsRepo.kt`, `AppRoot.kt`, `NutritionRepo.kt`, `GarminClient.kt`, `ClaudeClient.kt`, `FoodItem`, `TrainingReminder.kt`, `Speaker.kt`, `LabParser`?**
+  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+- **Should `TargetsTest` be split into smaller, more focused modules?**
+  _Cohesion score 0.06497175141242938 - nodes in this community are weakly interconnected._
+- **Why does `MainActivity` connect `RecognitionListener` to `TrainingReminder.kt`, `SmokeTest.kt`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
