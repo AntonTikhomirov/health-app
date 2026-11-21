@@ -9,6 +9,7 @@ import com.tikhomirov.zdorovyak.data.OtherActivity
 import com.tikhomirov.zdorovyak.data.Profile
 import com.tikhomirov.zdorovyak.data.ProgramEntity
 import com.tikhomirov.zdorovyak.data.SetLog
+import com.tikhomirov.zdorovyak.data.TrainingMark
 import com.tikhomirov.zdorovyak.data.WorkoutEntity
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -180,6 +181,50 @@ $catalogText
         }
         dao.finishWorkout(wid, System.currentTimeMillis())
         return msgs
+    }
+
+    // ---------- Календарь ----------
+
+    /** Какой день программы следующий: по кругу, считая тренировки с момента создания программы. */
+    fun nextIndex(prog: ProgramEntity?, workouts: List<WorkoutEntity>): Int =
+        prog?.let { p -> workouts.count { it.finishedAt != null && it.startedAt >= p.createdAt } } ?: 0
+
+    /** Календарь [from]..[to] из того, что уже загружено экраном (Flow), — без запросов к базе. */
+    fun calendar(
+        profile: Profile, prog: ProgramEntity?, workouts: List<WorkoutEntity>, others: List<OtherActivity>,
+        marks: List<TrainingMark>, from: Long, to: Long, today: Long = LocalDate.now().toEpochDay(),
+    ): List<CalDay> {
+        val plan = parsePlan(prog)
+        val start = prog?.let { java.time.Instant.ofEpochMilli(it.createdAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay() } ?: Long.MAX_VALUE
+        return Schedule.build(
+            from, to, today, profile.weekdays,
+            workouts = workouts.filter { it.finishedAt != null }.groupBy({ it.day }, { it.dayName }),
+            replaced = others.filter { it.replacesWorkout }.map { it.day }.toSet(),
+            marks = marks.associate { it.day to it.status },
+            planDays = plan?.days?.map { it.name }.orEmpty(),
+            nextIndex = nextIndex(prog, workouts),
+            start = start,
+        )
+    }
+
+    suspend fun calendarNow(profile: Profile, from: Long, to: Long): List<CalDay> =
+        calendar(profile, dao.activeProgramNow(), dao.lastWorkouts(1000), dao.othersRange(from, to), dao.marksNow(), from, to)
+
+    suspend fun mark(day: Long, status: String, note: String = "") = dao.upsertMark(TrainingMark(day, status, note))
+
+    /** Снять отметку. Если это был перенос — убрать и «переехавший» день. */
+    suspend fun clearMark(day: Long) {
+        val all = dao.marksNow()
+        all.filter { it.status == Mark.EXTRA && it.note == "из $day" }.forEach { dao.deleteMark(it.day) }
+        dao.deleteMark(day)
+    }
+
+    /** Перенести тренировку с [day] на следующий день (если он и так плановый — просто освобождаем [day]). */
+    suspend fun moveToNextDay(day: Long, weekdays: Set<Int>) {
+        val marks = dao.marksNow().associate { it.day to it.status }
+        dao.upsertMark(TrainingMark(day, Mark.MOVED))
+        val next = day + 1
+        if (!Schedule.isPlanned(next, weekdays, marks)) dao.upsertMark(TrainingMark(next, Mark.EXTRA, "из $day"))
     }
 
     suspend fun addOther(day: Long, title: String, minutes: Int, rpe: Int, zones: Set<String>, replaces: Boolean) {

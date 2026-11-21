@@ -131,6 +131,17 @@ interface TrainingDao {
 
     @Query("SELECT * FROM other_activity WHERE day BETWEEN :from AND :to")
     suspend fun othersRange(from: Long, to: Long): List<OtherActivity>
+
+    @Query("SELECT * FROM training_mark")
+    fun marks(): Flow<List<TrainingMark>>
+
+    @Query("SELECT * FROM training_mark")
+    suspend fun marksNow(): List<TrainingMark>
+
+    @Upsert suspend fun upsertMark(m: TrainingMark)
+
+    @Query("DELETE FROM training_mark WHERE day = :day")
+    suspend fun deleteMark(day: Long)
 }
 
 @Dao
@@ -211,8 +222,9 @@ interface LabDao {
         ExerciseFeedback::class, OtherActivity::class, ChatMessage::class,
         GarminDay::class, GarminActivity::class,
         LabReport::class, LabResult::class,
+        TrainingMark::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -225,7 +237,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         fun build(ctx: Context): AppDatabase =
-            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
+            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
 
         /**
          * v2: у продукта в справочнике появился источник данных. Старые продукты считаем введёнными руками,
@@ -248,6 +260,13 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_reportId` ON `lab_result` (`reportId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_code` ON `lab_result` (`code`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_lab_result_day` ON `lab_result` (`day`)")
+            }
+        }
+
+        /** v4 (0.4.0): календарь тренировок — отметки «сделал / пропустил / перенёс». Только новая таблица. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `training_mark` (`day` INTEGER NOT NULL, `status` TEXT NOT NULL, `note` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`day`))")
             }
         }
     }

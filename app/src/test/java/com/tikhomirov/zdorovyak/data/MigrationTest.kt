@@ -44,4 +44,17 @@ class MigrationTest {
         val r = db.query("SELECT COUNT(*) FROM lab_result"); r.moveToFirst()
         assertEquals(0, r.getInt(0))
     }
+
+    @Test fun migrate3to4() {
+        helper.createDatabase("m4.db", 3).apply {
+            execSQL("INSERT INTO workout (day, startedAt, finishedAt, dayName, calibration, note) VALUES (20400, 1, 2, 'A', 0, '')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("m4.db", 4, true, AppDatabase.MIGRATION_3_4)
+        val w = db.query("SELECT COUNT(*) FROM workout"); w.moveToFirst()
+        assertEquals(1, w.getInt(0))
+        db.execSQL("INSERT INTO training_mark (day, status, note, createdAt) VALUES (20401, 'SKIPPED', '', 1)")
+        val m = db.query("SELECT status FROM training_mark WHERE day = 20401"); m.moveToFirst()
+        assertEquals("SKIPPED", m.getString(0))
+    }
 }

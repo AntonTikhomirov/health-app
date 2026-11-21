@@ -35,5 +35,6 @@ class App : Application() {
         labs = com.tikhomirov.zdorovyak.labs.LabsRepo(this, db, claude, settings) { coach }
         speaker = com.tikhomirov.zdorovyak.voice.Speaker(this, settings)
         runCatching { com.tikhomirov.zdorovyak.garmin.GarminSyncWorker.schedule(this) }
+        runCatching { com.tikhomirov.zdorovyak.strength.TrainingReminder.schedule(this, settings.profile.value.remindHour) }
     }
 }

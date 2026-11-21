@@ -25,8 +25,19 @@ import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-data class PhotoItem(val name: String, val grams: Double, val kcal: Double, val protein: Double, val fat: Double, val carbs: Double)
-data class PhotoResult(val items: List<PhotoItem>, val comment: String)
+/** Позиция разобранного приёма пищи: продукт на 100 г и масса. */
+data class MealItem(val name: String, val grams: Double, val amount: String, val per100: FoodItem) {
+    val estimated: Boolean get() = per100.source == FoodSource.AI
+    fun entryFor(day: Long, meal: String, grams: Double, source: String, time: Long) = FoodEntry(
+        day = day, time = time, meal = meal, name = per100.name, grams = grams,
+        kcal = per100.kcal100 * grams / 100, protein = per100.protein100 * grams / 100,
+        fat = per100.fat100 * grams / 100, carbs = per100.carbs100 * grams / 100, source = source,
+    )
+}
+
+data class ParsedMeal(val items: List<MealItem>, val comment: String, val meal: String? = null)
+
+fun BaseFood.toItem() = FoodItem(name = name, kcal100 = kcal100, protein100 = protein100, fat100 = fat100, carbs100 = carbs100, source = FoodSource.BASE)
 
 /** Источники данных о продукте, от самого надёжного к наименее. */
 object FoodSource {
@@ -87,10 +98,7 @@ class NutritionRepo(
         val trusted = mine.filter { it.source != FoodSource.AI }.map { FoodOption(it, true) }
         val ai = mine.filter { it.source == FoodSource.AI }.map { FoodOption(it, true) }
         val taken = mine.map { FoodBase.norm(it.name) }.toMutableSet()
-        val fromBase = base.search(q, limit).filter { taken.add(FoodBase.norm(it.name)) }.map {
-            FoodOption(FoodItem(name = it.name, kcal100 = it.kcal100, protein100 = it.protein100, fat100 = it.fat100,
-                carbs100 = it.carbs100, source = FoodSource.BASE), false)
-        }
+        val fromBase = base.search(q, limit).filter { taken.add(FoodBase.norm(it.name)) }.map { FoodOption(it.toItem(), false) }
         return (trusted.take(4) + fromBase + trusted.drop(4) + ai).take(limit)
     }
 
@@ -177,26 +185,83 @@ class NutritionRepo(
             source = FoodSource.AI)
     }
 
-    /** Фото тарелки → список блюд с оценкой массы и КБЖУ. */
-    suspend fun analyzePhoto(file: File, hint: String): PhotoResult {
-        val b64 = withContext(Dispatchers.Default) { compress(file) }
-        val system = """
-Ты нутрициолог. По фото еды оцени, что на тарелке, массу каждого компонента в граммах и КБЖУ.
-Учитывай типичные порции, видимый размер посуды, масло при жарке. Если не уверен — дай наиболее вероятную оценку и скажи об этом в comment.
+    // ---------- Разбор приёма пищи: фраза, голос, фото тарелки ----------
+    //
+    // Принцип как в силовом модуле: ИИ только называет продукты и оценивает граммы, а КБЖУ берём из справочника
+    // и встроенной базы. Свою оценку КБЖУ ИИ даёт лишь для того, чего в базе нет, и такая позиция помечается.
+
+    private fun namesForPrompt(own: List<FoodItem>): String {
+        val mine = own.filter { it.source != FoodSource.AI }.map { it.name }
+        return (mine + base.foods.map { it.name }).distinctBy { FoodBase.norm(it) }.joinToString("; ")
+    }
+
+    private val parseRules = """
+Правила:
+- Раздели на отдельные продукты/блюда. Гарнир, мясо, соус, хлеб, напиток — отдельными позициями.
+- Название бери ИЗ СПИСКА НИЖЕ, если есть подходящее по смыслу и способу приготовления, копируй точно и ставь "fromList": true.
+  Если подходящего нет — короткое обычное название, "fromList": false и твоя оценка КБЖУ на 100 г (kcal100, protein100, fat100, carbs100).
+- Масса — в граммах готового продукта. Если сказано в штуках/ложках/стаканах — переведи по типовым весам:
+  яйцо 55 г, кусок хлеба 30 г, котлета 90 г, сосиска 50 г, пельмень 12 г, блин 45 г, яблоко 180 г, банан 120 г, мандарин 70 г,
+  ст. ложка: масло 17 г, сметана 20 г, мёд/варенье 25 г, каша 25 г; ч. ложка сахара 5 г, масла 5 г; стакан молока/кефира 250 г,
+  чашка чая/кофе 200 г, тарелка супа 300 г, порция гарнира 200 г.
+- "amount" — как сказал человек, по-русски коротко («2 шт.», «тарелка», «200 г»).
+- Если приём пищи назван или очевиден (завтрак/обед/ужин/перекус) — верни "meal", иначе null.
 Верни только JSON:
-{"items":[{"name":"гречка отварная","grams":180,"kcal":198,"protein":7.6,"fat":2.0,"carbs":38.0}],"comment":"коротко по-русски: что учтено, где неопределённость"}
-Значения kcal/protein/fat/carbs — на указанную массу, не на 100 г.
+{"items":[{"name":"Гречка отварная","grams":200,"amount":"200 г","fromList":true}],"meal":"Обед","comment":"коротко, если что-то непонятно"}
 """.trimIndent()
-        val obj = claude.completeJson(system, listOf(Msg("user", listOf(
+
+    /** «200 г гречки, 2 котлеты и чай с сахаром» → позиции с КБЖУ из базы. */
+    suspend fun parsePhrase(text: String): ParsedMeal {
+        val own = dao.search("")
+        val system = "Ты помогаешь вести дневник питания. Человек описывает словами, что съел (кухня русская, казахская, среднеазиатская).\n" +
+            parseRules + "\n\nСписок продуктов:\n" + namesForPrompt(own)
+        val o = claude.completeJson(system, listOf(Msg("user", listOf(Part.Text(text)))), maxTokens = 1500)
+        return toMeal(o)
+    }
+
+    /** Фото тарелки: ИИ называет блюда и массу, КБЖУ — из базы. */
+    suspend fun analyzePhoto(file: File, hint: String): ParsedMeal {
+        val b64 = withContext(Dispatchers.Default) { compress(file) }
+        val own = dao.search("")
+        val system = "Ты нутрициолог. По фото еды определи, что на тарелке, и оцени массу каждого компонента в граммах " +
+            "по видимому размеру посуды и типичным порциям; масло при жарке — отдельной позицией, если его заметно.\n" +
+            parseRules + "\n\nСписок продуктов:\n" + namesForPrompt(own)
+        val o = claude.completeJson(system, listOf(Msg("user", listOf(
             Part.Image(b64),
             Part.Text(if (hint.isBlank()) "Что здесь и сколько?" else "Подсказка: $hint"),
         ))), maxTokens = 1500)
-        val items = obj["items"]?.jsonArray?.map { el ->
-            val o = el.jsonObject
-            fun d(k: String) = o[k]?.jsonPrimitive?.doubleOrNull ?: 0.0
-            PhotoItem(o["name"]?.jsonPrimitive?.content ?: "Блюдо", d("grams"), d("kcal"), d("protein"), d("fat"), d("carbs"))
+        return toMeal(o)
+    }
+
+    private suspend fun toMeal(o: JsonObject): ParsedMeal {
+        val items = o["items"]?.jsonArray?.mapNotNull { el ->
+            val x = el.jsonObject
+            fun d(k: String) = x[k]?.jsonPrimitive?.doubleOrNull
+            val name = x["name"]?.jsonPrimitive?.content?.trim().orEmpty()
+            val grams = d("grams") ?: return@mapNotNull null
+            if (name.isEmpty() || grams <= 0) return@mapNotNull null
+            val fromList = x["fromList"]?.jsonPrimitive?.content == "true"
+            val ai = d("kcal100")?.takeIf { it > 0 }?.let {
+                FoodItem(name = name, kcal100 = it, protein100 = d("protein100") ?: 0.0, fat100 = d("fat100") ?: 0.0,
+                    carbs100 = d("carbs100") ?: 0.0, source = FoodSource.AI)
+            }
+            MealItem(name, grams, x["amount"]?.jsonPrimitive?.content?.takeIf { it != "null" } ?: "${grams.toInt()} г",
+                resolve(name, fromList, ai))
         } ?: emptyList()
-        return PhotoResult(items, obj["comment"]?.jsonPrimitive?.content ?: "")
+        val meal = o["meal"]?.jsonPrimitive?.content?.takeIf { it in listOf("Завтрак", "Обед", "Ужин", "Перекус") }
+        return ParsedMeal(items, o["comment"]?.jsonPrimitive?.content?.takeIf { it != "null" }.orEmpty(), meal)
+    }
+
+    /**
+     * Найти продукт на 100 г: свой справочник (кроме оценок ИИ) → встроенная база по точному названию →
+     * лучший результат поиска (если ИИ сказал, что взял из списка) → оценка ИИ.
+     */
+    suspend fun resolve(name: String, fromList: Boolean, ai: FoodItem?): FoodItem {
+        dao.byName(name)?.takeIf { it.source != FoodSource.AI }?.let { return it }
+        val key = FoodBase.norm(name)
+        base.foods.firstOrNull { FoodBase.norm(it.name) == key }?.let { return it.toItem() }
+        if (fromList || ai == null) search(name, 1).firstOrNull()?.takeIf { it.item.source != FoodSource.AI }?.let { return it.item }
+        return ai ?: estimateByName(name)
     }
 
     private fun compress(file: File): String = com.tikhomirov.zdorovyak.ai.Images.jpegBase64(file)

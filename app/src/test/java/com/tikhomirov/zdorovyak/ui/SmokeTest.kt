@@ -42,17 +42,25 @@ class SmokeTest {
         rule.onNodeWithText("Начать тренировку").assertDoesNotExist()
 
         tab("Тело"); rule.onNodeWithText("Записать").assertExists()
-        tab("Питание"); rule.onNodeWithText(" Фото").assertExists()
+        tab("Питание"); rule.onNodeWithText("Фото").assertExists(); rule.onNodeWithText("Сказать").assertExists()
 
         // Тренировки: экран настройки → базовый план (ключа Claude нет)
         tab("Тренировки")
-        rule.onNode(hasScrollAction()).performScrollToNode(hasText("Составить программу"))
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Составить программу"))
         rule.onNodeWithText("Составить программу").performClick()
-        rule.waitUntil(15_000) { has("Пересобрать") }
+        // Календарь сверху: расписание по умолчанию Пн-Ср-Пт, плитки дисциплины; программа ниже
+        // Без ключа Claude собирается базовый план, экран настройки показывает почему — закрываем
+        rule.waitUntil(15_000) { has("Ключ Claude не задан — использую базовый план.") }
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Закрыть"))
+        rule.onNodeWithText("Закрыть").performClick()
+        rule.waitUntil(15_000) { has("Дни: Пн-Ср-Пт") }
+        rule.onNodeWithText("на этой неделе").assertExists()
+        rule.waitUntil(15_000) { runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Пересобрать")) }.isSuccess }
         rule.onNodeWithText("базовая").assertExists()
 
         // Тренировка-прикидка: оценить все упражнения «Нормально» и завершить
-        rule.onNodeWithText("Тренировка").performClick()
+        rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Тренировка вне плана"))
+        rule.onNodeWithText("Тренировка вне плана").performClick()
         rule.waitUntil(10_000) { has("Нормально") }
         for (i in 0..12) {
             runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToIndex(i) }
@@ -67,7 +75,7 @@ class SmokeTest {
 
         // История появилась
         // история приходит из Room асинхронно — ждём, пока строка появится в списке
-        rule.waitUntil(10_000) { runCatching { rule.onNode(hasScrollAction()).performScrollToNode(hasText("прикидка")) }.isSuccess }
+        rule.waitUntil(10_000) { runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("прикидка")) }.isSuccess }
 
         // Коуч
         tab("Коуч")
@@ -84,9 +92,10 @@ class SmokeTest {
         tab("Назад")
         rule.waitUntil(5_000) { has("Вес") }
 
-        // Сегодня: карточка тренировки, быстрый ввод
+        // Сегодня: тренировка уже записана — календарь показывает «сделано»; кольца КБЖУ на месте
         tab("Сегодня")
-        rule.waitUntil(5_000) { has("Начать тренировку") }
+        rule.waitUntil(5_000) { has("Сегодня сделано. Так держать.") }
+        rule.onNodeWithText("из 2200 ккал", substring = true).assertExists()
         tab("Быстрый ввод")
         rule.waitUntil(5_000) { has("Еда по фото") }
         rule.onNodeWithText("Написать коучу").performSemanticsAction(SemanticsActions.OnClick)

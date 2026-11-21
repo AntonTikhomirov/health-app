@@ -56,6 +56,11 @@ import com.tikhomirov.zdorovyak.strength.SessionItem
 import com.tikhomirov.zdorovyak.strength.SessionPlan
 import com.tikhomirov.zdorovyak.strength.TrainingRepo
 import com.tikhomirov.zdorovyak.ui.theme.Z
+import com.tikhomirov.zdorovyak.strength.CalDay
+import com.tikhomirov.zdorovyak.strength.DayStatus
+import com.tikhomirov.zdorovyak.strength.Schedule
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.FitnessCenter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,36 +76,70 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
     var setupOpen by remember { mutableStateOf(false) }
     var otherDialog by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
+    var scheduleOpen by remember { mutableStateOf(false) }
+    var sheetDay by remember { mutableStateOf<CalDay?>(null) }
+    var weekStart by remember { mutableStateOf(Schedule.weekStart(today())) }
 
     LaunchedEffect(quick) { if (quick == Quick.OTHER_ACTIVITY) { otherDialog = true; consumeQuick() } }
     LaunchedEffect(programEntity) { loaded = true }
 
-    if (setupOpen || (loaded && programEntity == null && !app.settings.screeningPassed)) {
+    // Первый запуск: сразу показываем настройку. Фиксируем это в setupOpen, иначе после нажатия «Составить»
+    // (screeningPassed = true, профиль сохранён) экран переключится и отменит составление программы на полпути.
+    val autoSetup = loaded && programEntity == null && !app.settings.screeningPassed
+    LaunchedEffect(autoSetup) { if (autoSetup) setupOpen = true }
+    if (setupOpen || autoSetup) {
         ProgramSetup(profile, onDone = { setupOpen = false }, modifier = modifier)
     } else {
         val plan = app.training.parsePlan(programEntity)
+        val cal = rememberCalendar()
         val stateMap = states.associateBy { it.exerciseId }
-        LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            cal?.let { c ->
+                item {
+                    ZCard(accent = Z.Orange) {
+                        CardHeader("Дни: ${Schedule.describe(profile.weekdays)}", Icons.Filled.CalendarMonth, Z.Orange) {
+                            TextButton(onClick = { scheduleOpen = true }) { Text("Изменить") }
+                        }
+                        WeekStrip(c, weekStart, onWeek = { weekStart = it }) { sheetDay = it }
+                        DisciplineRow(c)
+                        val t = c.todayDay
+                        when (t?.status) {
+                            DayStatus.TODAY -> Button(onClick = onStartWorkout, Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) {
+                                Text("Сегодня тренировка${t.planDay?.let { " · день $it" } ?: ""} — начать")
+                            }
+                            else -> c.next?.let { n ->
+                                Muted("Следующая: ${n.date.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM", ru))}${n.planDay?.let { " · день $it" } ?: ""}. Нажмите на день, чтобы отметить или перенести.")
+                            }
+                        }
+                    }
+                }
+                item {
+                    ZCard {
+                        CardHeader("Последние 5 недель", null, Z.Orange)
+                        WeeksGrid(c) { sheetDay = it }
+                    }
+                }
+            }
             item {
                 ZCard(accent = Z.Orange) {
                     if (plan == null) {
                         Text("Программа не составлена", fontWeight = FontWeight.SemiBold)
                         Button(onClick = { setupOpen = true }) { Text("Составить программу") }
                     } else {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("Программа", fontWeight = FontWeight.SemiBold)
+                        CardHeader("Программа", Icons.Filled.FitnessCenter, Z.Orange) {
                             Pill(if (plan.source == "ai") "составил ИИ" else "базовая", Z.Orange)
                         }
                         if (plan.rationale.isNotBlank()) Muted(plan.rationale)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = onStartWorkout, colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) { Text("Тренировка") }
+                            OutlinedButton(onClick = onStartWorkout) { Text("Тренировка вне плана") }
                             OutlinedButton(onClick = { setupOpen = true }) { Text("Пересобрать") }
                         }
                     }
                 }
             }
             plan?.days?.forEach { d ->
-                item { SectionTitle("День ${d.name}") }
+                item { SectionTitle("День ${d.name}${cal?.days?.firstOrNull { it.day >= today() && it.planDay == d.name && (it.status == DayStatus.TODAY || it.status == DayStatus.PLANNED) }?.let { " · ближайший: " + dayLabel(it.day) } ?: ""}") }
                 item {
                     ZCard {
                         d.exercises.forEach { pe ->
@@ -164,6 +203,12 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
     }
 
     if (otherDialog) OtherActivityDialog(onDismiss = { otherDialog = false })
+    if (scheduleOpen) ScheduleDialog(
+        planDays = app.training.parsePlan(programEntity)?.days?.size,
+        onDismiss = { scheduleOpen = false },
+        onRebuild = { setupOpen = true },
+    )
+    sheetDay?.let { d -> DaySheet(d, today(), onStartWorkout = onStartWorkout, onDismiss = { sheetDay = null }) }
 }
 
 @Composable
@@ -172,7 +217,8 @@ private fun ProgramSetup(profile: Profile, onDone: () -> Unit, modifier: Modifie
     val snack = LocalSnack.current
     val scope = rememberCoroutineScope()
     var inv by remember { mutableStateOf(profile.inventory) }
-    var days by remember { mutableStateOf(profile.trainingDays) }
+    var weekdays by remember { mutableStateOf(profile.weekdays) }
+    val days = weekdays.size
     var minutes by remember { mutableStateOf(profile.sessionMinutes.toString()) }
     var limitations by remember { mutableStateOf(profile.limitations) }
     var experience by remember { mutableStateOf(profile.experience) }
@@ -218,10 +264,9 @@ private fun ProgramSetup(profile: Profile, onDone: () -> Unit, modifier: Modifie
         CheckRow("Тренажёры / блоки (зал)", inv.machines) { inv = inv.copy(machines = it) }
 
         SectionTitle("Режим")
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("В неделю:")
-            listOf(2, 3, 4).forEach { n -> FilterChip(selected = days == n, onClick = { days = n }, label = { Text("$n") }) }
-        }
+        Text("Дни тренировок")
+        WeekdayPicker(weekdays) { weekdays = it }
+        ScheduleHints(weekdays)
         NumField("Минут на тренировку", minutes, { minutes = it }, decimal = false)
         TextField1("Опыт (например: «год назад ходил в зал»)", experience, { experience = it })
         TextField1("Что беречь (колено, поясница, плечо…)", limitations, { limitations = it }, single = false)
@@ -233,14 +278,14 @@ private fun ProgramSetup(profile: Profile, onDone: () -> Unit, modifier: Modifie
 
         building?.let { Row(verticalAlignment = Alignment.CenterVertically) { CircularProgressIndicator(Modifier.padding(end = 12.dp)); Text(it) } }
         log.forEach { Muted(it) }
-        Button(enabled = building == null, onClick = {
+        Button(enabled = building == null && days in 2..4, onClick = {
             val kbs = kbText.split(',', ';', ' ').mapNotNull { it.trim().replace(',', '.').toDoubleOrNull() }
             val inv2 = inv.copy(kettlebells = kbs,
                 dbMin = dbMin.toDoubleOrNull() ?: inv.dbMin, dbMax = dbMax.toDoubleOrNull() ?: inv.dbMax,
                 dbStep = dbStep.toDoubleOrNull()?.takeIf { it > 0 } ?: inv.dbStep,
                 barbellMin = bbMin.toDoubleOrNull() ?: inv.barbellMin, barbellMax = bbMax.toDoubleOrNull() ?: inv.barbellMax,
                 barbellStep = bbStep.toDoubleOrNull()?.takeIf { it > 0 } ?: inv.barbellStep)
-            val p = profile.copy(inventory = inv2, trainingDays = days,
+            val p = profile.copy(inventory = inv2, trainingDays = days, trainingWeekdays = weekdays.sorted(),
                 sessionMinutes = minutes.toIntOrNull() ?: 50, limitations = limitations, experience = experience)
             app.settings.saveProfile(p)
             app.settings.screeningPassed = true
