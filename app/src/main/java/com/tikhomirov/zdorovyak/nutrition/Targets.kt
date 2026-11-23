@@ -16,11 +16,16 @@ import kotlin.math.roundToInt
  */
 enum class Sex(val title: String) { M("Мужской"), F("Женский") }
 
-enum class Activity(val factor: Double, val title: String, val hint: String) {
-    SEDENTARY(1.2, "Минимум", "Сидячая работа, почти без тренировок"),
-    LIGHT(1.375, "Лёгкая", "Сидячая работа + 2–3 тренировки в неделю"),
-    MODERATE(1.55, "Средняя", "Тренировки + много хожу или регулярный физтруд"),
-    HIGH(1.725, "Высокая", "Тяжёлый физический труд почти каждый день"),
+/**
+ * factor — классический коэффициент «с тренировками внутри».
+ * base — образ жизни БЕЗ тренировок и работ: используется, когда активность прибавляется к норме отдельно
+ * (ActivityBurn), иначе тренировка попала бы в норму дважды.
+ */
+enum class Activity(val factor: Double, val title: String, val hint: String, val base: Double, val baseHint: String) {
+    SEDENTARY(1.2, "Минимум", "Сидячая работа, почти без тренировок", 1.2, "Сижу почти весь день, хожу мало"),
+    LIGHT(1.375, "Лёгкая", "Сидячая работа + 2–3 тренировки в неделю", 1.3, "Сидячая работа, но гуляю и хожу пешком"),
+    MODERATE(1.55, "Средняя", "Тренировки + много хожу или регулярный физтруд", 1.4, "Полдня на ногах"),
+    HIGH(1.725, "Высокая", "Тяжёлый физический труд почти каждый день", 1.55, "Весь день на ногах"),
 }
 
 enum class GoalMode(val title: String) { LOSE("Снижать вес"), MAINTAIN("Держать вес"), GAIN("Набирать") }
@@ -35,6 +40,8 @@ data class TargetInput(
     val goal: GoalMode,
     val rateKgPerWeek: Double,     // темп для LOSE/GAIN, положительное число
     val proteinPerKg: Double,
+    /** true — тренировки и работы прибавляются к норме отдельно, в формуле только образ жизни. */
+    val activitySeparate: Boolean = false,
 )
 
 data class Targets(
@@ -51,7 +58,8 @@ object NutritionMath {
     fun bmrMifflin(sex: Sex, weightKg: Double, heightCm: Int, age: Int): Double =
         10 * weightKg + 6.25 * heightCm - 5 * age + if (sex == Sex.M) 5 else -161
 
-    fun formulaTdee(i: TargetInput): Double = bmrMifflin(i.sex, i.weightKg, i.heightCm, i.ageYears) * i.activity.factor
+    fun formulaTdee(i: TargetInput): Double =
+        bmrMifflin(i.sex, i.weightKg, i.heightCm, i.ageYears) * if (i.activitySeparate) i.activity.base else i.activity.factor
 
     /**
      * Нормы от расхода. Ограничители: дефицит не больше 25 % расхода и норма не ниже основного обмена (BMR);
@@ -144,6 +152,7 @@ object NutritionMath {
         prevTdee: Double,
         fullDayKcal: Double,
         firstTime: Boolean = false,
+        burnByDay: Map<Long, Int> = emptyMap(),
     ): Adaptive {
         val from = today - WINDOW_DAYS
         val to = today - 1
@@ -166,7 +175,10 @@ object NutritionMath {
         val endTrend = trendAt(trend, lastW)!!
         val span = (lastW - firstW).coerceAtLeast(7).toDouble()
         val avg = logged.values.average()
-        val observed = avg - (endTrend - startTrend) * KCAL_PER_KG / span
+        // Если активность прибавляется к норме отдельно, из фактического расхода вычитаем её среднее за окно:
+        // остаётся «базовый» расход, а тренировки вернутся в норму в свой день
+        val avgBurn = (from..to).sumOf { burnByDay[it] ?: 0 } / WINDOW_DAYS.toDouble()
+        val observed = avg - (endTrend - startTrend) * KCAL_PER_KG / span - avgBurn
         // Первый переход с формулы на факт: формула может ошибаться на сотни ккал, доверяем факту сильнее
         val blend = if (firstTime) 0.5 else BLEND
         val maxChange = if (firstTime) 2 * MAX_WEEKLY_CHANGE else MAX_WEEKLY_CHANGE
@@ -179,7 +191,9 @@ object NutritionMath {
             perWeek < 0 -> "тренд ${fmt1(perWeek)} кг/нед"
             else -> "тренд +${fmt1(perWeek)} кг/нед"
         }
-        val text = "За ${logged.size} полных дней в среднем ${avg.roundToInt()} ккал, $dir → расход по факту ≈ ${observed.roundToInt()} ккал. " +
+        val text = "За ${logged.size} полных дней в среднем ${avg.roundToInt()} ккал, $dir → " +
+            (if (avgBurn >= 1) "базовый расход без тренировок (они в среднем ${avgBurn.roundToInt()} ккал/день) ≈ ${observed.roundToInt()} ккал. "
+            else "расход по факту ≈ ${observed.roundToInt()} ккал. ") +
             "Оценка сдвинута осторожно: ${prevTdee.roundToInt()} → ${newTdee.roundToInt()} ккал" +
             (if (abs(blended - prevTdee) > maxChange) " (не больше ±${maxChange.toInt()} за раз)." else ".")
         return Adaptive(newTdee, observed, logged.size, wDays, avg, perWeek, text)

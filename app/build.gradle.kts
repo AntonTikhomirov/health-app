@@ -15,8 +15,8 @@ android {
         applicationId = "com.tikhomirov.zdorovyak"
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
     // Свой ключ подписи: APK с любой машины ставятся поверх друг друга без потери данных.
     // Ключ НЕ хранится в git: положите keystore/zdorovyak.jks и keystore/keystore.properties
@@ -82,6 +82,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    // Камера для фото прогресса: свой экран с силуэтом-гидом, «призраком» прошлого снимка и таймером
+    val camerax = "1.4.1"
+    implementation("androidx.camera:camera-camera2:$camerax")
+    implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.camera:camera-view:$camerax")
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.room:room-testing:2.6.1")
     testImplementation("org.robolectric:robolectric:4.14.1")

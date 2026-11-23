@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -36,7 +37,7 @@ import com.tikhomirov.zdorovyak.ui.theme.Z
 import kotlinx.coroutines.launch
 
 @Composable
-fun BodyScreen(modifier: Modifier, quick: Quick?, onOpenLabs: () -> Unit = {}, consumeQuick: () -> Unit) {
+fun BodyScreen(modifier: Modifier, quick: Quick?, onOpenLabs: () -> Unit = {}, onPhotos: (PhotoMode) -> Unit = {}, consumeQuick: () -> Unit) {
     val app = LocalApp.current
     val scope = rememberCoroutineScope()
     val profile by app.settings.profile.collectAsState()
@@ -52,8 +53,7 @@ fun BodyScreen(modifier: Modifier, quick: Quick?, onOpenLabs: () -> Unit = {}, c
     LazyColumn(modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             ZCard(accent = Z.Lime) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Вес", fontWeight = FontWeight.SemiBold)
+                CardHeader("Вес", Icons.Filled.MonitorWeight, Z.Lime) {
                     Button(onClick = { weightDialog = true }) { Text("Записать") }
                 }
                 weights.firstOrNull()?.let { w ->
@@ -69,6 +69,7 @@ fun BodyScreen(modifier: Modifier, quick: Quick?, onOpenLabs: () -> Unit = {}, c
                 } ?: Muted("Пока нет записей. Взвешивайтесь утром натощак — так тренд честнее.")
             }
         }
+        item { BodyPhotosCard(onPhotos) }
         item {
             ZCard {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

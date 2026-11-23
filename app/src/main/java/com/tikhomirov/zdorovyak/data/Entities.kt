@@ -213,3 +213,16 @@ data class LabResult(
     val refText: String = "",
     val flag: String = "?",
 )
+
+/**
+ * Фото прогресса тела. Файл — во внутренней памяти приложения (filesDir/body_photos), никуда не отправляется.
+ * pose: FRONT / SIDE / BACK. Один снимок на ракурс в день: переснял — старый заменяется.
+ */
+@Entity(tableName = "body_photo", indices = [Index(value = ["day", "pose"], unique = true)])
+data class BodyPhoto(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val day: Long,
+    val pose: String,
+    val filePath: String,
+    val takenAt: Long = System.currentTimeMillis(),
+)

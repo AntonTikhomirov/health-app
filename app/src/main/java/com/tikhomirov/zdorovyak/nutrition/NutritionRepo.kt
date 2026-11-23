@@ -10,6 +10,8 @@ import com.tikhomirov.zdorovyak.data.FoodItem
 import com.tikhomirov.zdorovyak.data.Profile
 import com.tikhomirov.zdorovyak.data.Settings
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -274,7 +276,44 @@ class NutritionRepo(
         activity = runCatching { Activity.valueOf(p.activity) }.getOrDefault(Activity.LIGHT),
         goal = runCatching { GoalMode.valueOf(p.goalMode) }.getOrDefault(GoalMode.LOSE),
         rateKgPerWeek = p.rateKgPerWeek, proteinPerKg = p.proteinPerKg,
+        activitySeparate = p.activityToTarget,
     )
+
+    // ---------- Расход на активность ----------
+
+    /** Расход на активность по дням [from]..[to] (только дни, где что-то было). */
+    suspend fun burnRange(from: Long, to: Long, p: Profile = settings.profile.value): Map<Long, ActivityBurn.Day> {
+        val weighIns = db.body().weightsSince(to - 180).map { it.day to it.weightKg }
+        val weight = if (weighIns.isEmpty()) db.body().lastWeights(1).firstOrNull()?.weightKg ?: return emptyMap()
+            else NutritionMath.weightTrend(weighIns).last().second
+        val inp = input(p, weight)
+        val bmr = NutritionMath.bmrMifflin(inp.sex, weight, inp.heightCm, inp.ageYears)
+        val t = db.training()
+        val workouts = t.workoutsRange(from, to)
+        val feels = if (workouts.isEmpty()) emptyMap() else t.feedbackForAll(workouts.map { it.id }).groupBy({ it.workoutId }, { it.feel })
+        val strength = workouts.groupBy { it.day }.mapValues { (_, ws) ->
+            ws.map { w -> ActivityBurn.Strength(((w.finishedAt!! - w.startedAt) / 60000).toInt(), feels[w.id].orEmpty(), "Силовая, день ${w.dayName}") }
+        }.toMutableMap()
+        // «Сделал, но не записал»: длительность из профиля, ощущения неизвестны — «нормально»
+        t.marksNow().filter { it.day in from..to && it.status == com.tikhomirov.zdorovyak.strength.Mark.DONE && strength[it.day].isNullOrEmpty() }
+            .forEach { strength[it.day] = listOf(ActivityBurn.Strength(p.sessionMinutes, emptyList(), "Силовая (без записи)")) }
+        val labour = t.othersRange(from, to).groupBy({ it.day }, { ActivityBurn.Labour(it.title.ifBlank { "Прочая активность" }, it.activeMinutes, it.rpe) })
+        val watch = db.garmin().activitiesRange(from, to).groupBy({ it.day }, { ActivityBurn.Watch(it.type, it.name, it.durationMin, it.kcal) })
+        return (strength.keys + labour.keys + watch.keys).associateWith { d ->
+            ActivityBurn.day(weight, bmr, strength[d].orEmpty(), labour[d].orEmpty(), watch[d].orEmpty())
+        }.filterValues { !it.isEmpty }
+    }
+
+    /** Активность за день как поток: пересчитывается, когда добавились тренировка, работа или данные Garmin. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun dayBurn(day: Long): kotlinx.coroutines.flow.Flow<ActivityBurn.Day> {
+        val t = db.training()
+        return kotlinx.coroutines.flow.combine(
+            t.finishedWorkouts(), t.others(), t.marks(), db.garmin().lastActivities(30), settings.profile,
+        ) { _, _, _, _, p -> p }
+            .mapLatest { p -> burnRange(day, day, p)[day] ?: ActivityBurn.Day(emptyList()) }
+            .flowOn(Dispatchers.IO)
+    }
 
     /**
      * Пересчитать нормы: тренд веса → формула; раз в неделю — адаптивный расход по факту.
@@ -294,11 +333,20 @@ class NutritionRepo(
         val inp = input(p, weight)
         val formula = NutritionMath.formulaTdee(inp)
         var e = settings.energy.value
+        val from = today - NutritionMath.WINDOW_DAYS
+        val burn = if (p.activityToTarget) burnRange(from, today - 1, p).mapValues { it.value.kcal } else emptyMap()
+        // Переключили режим «активность отдельно»: оценку по факту переводим в новую систему отсчёта
+        // (базовый расход = полный − средняя активность за 3 недели) и не ждём недельного пересчёта
+        if (e.adaptive && e.tdee != null && e.baseMode != p.activityToTarget) {
+            val avg = burnRange(from, today - 1, p).values.sumOf { it.kcal } / NutritionMath.WINDOW_DAYS.toDouble()
+            e = e.copy(tdee = e.tdee!! + if (p.activityToTarget) -avg else avg, baseMode = p.activityToTarget)
+        }
         if (today - e.lastCheckDay >= 7) {
-            val intake = dao.kcalByDay(today - NutritionMath.WINDOW_DAYS, today - 1).associate { it.day to it.kcal }
+            val intake = dao.kcalByDay(from, today - 1).associate { it.day to it.kcal }
             val prev = if (e.adaptive && e.tdee != null) e.tdee!! else formula
-            val a = NutritionMath.adaptiveTdee(intake, weighIns, today, prev, 0.6 * p.kcalTarget, firstTime = !e.adaptive)
-            e = if (a.tdee != null) EnergyState(tdee = a.tdee, adaptive = true, lastCheckDay = today, note = a.explanation, formulaTdee = formula)
+            val a = NutritionMath.adaptiveTdee(intake, weighIns, today, prev, 0.6 * p.kcalTarget, firstTime = !e.adaptive, burnByDay = burn)
+            e = if (a.tdee != null) EnergyState(tdee = a.tdee, adaptive = true, lastCheckDay = today, note = a.explanation, formulaTdee = formula,
+                baseMode = p.activityToTarget)
             else e.copy(note = if (e.adaptive) "Оценка расхода не меняется: ${a.explanation.substringAfter("не хватает: ")}" else a.explanation)
         }
         val tdee = if (e.adaptive && e.tdee != null) e.tdee!! else formula

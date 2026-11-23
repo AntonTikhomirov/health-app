@@ -35,6 +35,18 @@ interface BodyDao {
     suspend fun lastMeasurements(n: Int): List<Measurement>
 
     @Insert suspend fun insertMeasurement(m: Measurement): Long
+
+    @Query("SELECT * FROM body_photo ORDER BY day DESC, pose")
+    fun photos(): Flow<List<BodyPhoto>>
+
+    @Query("SELECT * FROM body_photo WHERE day = :day AND pose = :pose")
+    suspend fun photo(day: Long, pose: String): BodyPhoto?
+
+    @Query("SELECT MAX(day) FROM body_photo")
+    suspend fun lastPhotoDay(): Long?
+
+    @Upsert suspend fun upsertPhoto(p: BodyPhoto)
+    @Delete suspend fun deletePhoto(p: BodyPhoto)
     @Delete suspend fun deleteMeasurement(m: Measurement)
 }
 
@@ -109,6 +121,12 @@ interface TrainingDao {
 
     @Query("SELECT * FROM workout WHERE finishedAt IS NOT NULL ORDER BY startedAt DESC LIMIT :n")
     suspend fun lastWorkouts(n: Int): List<WorkoutEntity>
+
+    @Query("SELECT * FROM workout WHERE finishedAt IS NOT NULL AND day BETWEEN :from AND :to")
+    suspend fun workoutsRange(from: Long, to: Long): List<WorkoutEntity>
+
+    @Query("SELECT * FROM exercise_feedback WHERE workoutId IN (:ids)")
+    suspend fun feedbackForAll(ids: List<Long>): List<ExerciseFeedback>
 
     @Query("DELETE FROM workout WHERE finishedAt IS NULL")
     suspend fun dropUnfinished()
@@ -222,9 +240,9 @@ interface LabDao {
         ExerciseFeedback::class, OtherActivity::class, ChatMessage::class,
         GarminDay::class, GarminActivity::class,
         LabReport::class, LabResult::class,
-        TrainingMark::class,
+        TrainingMark::class, BodyPhoto::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -237,7 +255,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         fun build(ctx: Context): AppDatabase =
-            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+            Room.databaseBuilder(ctx, AppDatabase::class.java, "zdorovyak.db").addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
 
         /**
          * v2: у продукта в справочнике появился источник данных. Старые продукты считаем введёнными руками,
@@ -267,6 +285,14 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `training_mark` (`day` INTEGER NOT NULL, `status` TEXT NOT NULL, `note` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`day`))")
+            }
+        }
+
+        /** v5 (0.5.0): фото прогресса тела. Только новая таблица. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `body_photo` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `day` INTEGER NOT NULL, `pose` TEXT NOT NULL, `filePath` TEXT NOT NULL, `takenAt` INTEGER NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_body_photo_day_pose` ON `body_photo` (`day`, `pose`)")
             }
         }
     }

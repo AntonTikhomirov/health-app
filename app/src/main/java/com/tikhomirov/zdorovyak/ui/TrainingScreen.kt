@@ -105,7 +105,7 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
                         val t = c.todayDay
                         when (t?.status) {
                             DayStatus.TODAY -> Button(onClick = onStartWorkout, Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) {
+                                colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent)) {
                                 Text("Сегодня тренировка${t.planDay?.let { " · день $it" } ?: ""} — начать")
                             }
                             else -> c.next?.let { n ->
@@ -338,7 +338,7 @@ fun OtherActivityDialog(onDismiss: () -> Unit) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     zones.forEach { (k, l) ->
                         FilterChip(selected = k in sel, onClick = { if (k in sel) sel.remove(k) else sel.add(k) }, label = { Text(l) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Z.Sand, selectedLabelColor = Z.Bg))
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Z.Sand, selectedLabelColor = Z.OnAccent))
                     }
                 }
                 CheckRow("Вместо силовой тренировки", replaces) { replaces = it }
@@ -422,7 +422,7 @@ fun WorkoutScreen(onClose: () -> Unit) {
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg),
+                    colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent),
                 ) { Text(if (inputs.all { it.feel != null }) "Завершить тренировку" else "Оцените каждое упражнение") }
             }
             item { Spacer(Modifier.height(24.dp)) }
@@ -458,7 +458,7 @@ private fun ExerciseCard(inp: ItemInput) {
             Feel.entries.forEach { f ->
                 val c = when (f) { Feel.HARD -> Z.Red; Feel.NORMAL -> Z.Lime; Feel.EASY -> Z.Blue }
                 FilterChip(selected = inp.feel == f, onClick = { inp.feel = f }, label = { Text(f.ru) },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = c, selectedLabelColor = Z.Bg))
+                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = c, selectedLabelColor = Z.OnAccent))
             }
         }
         if (!painOpen && inp.pain == 0f) TextButton(onClick = { painOpen = true }) { Text("Был дискомфорт или боль?") }

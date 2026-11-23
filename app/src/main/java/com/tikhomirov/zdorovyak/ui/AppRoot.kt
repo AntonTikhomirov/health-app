@@ -54,15 +54,28 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Accessibility
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 val LocalApp = staticCompositionLocalOf<App> { error("no app") }
 val LocalSnack = staticCompositionLocalOf<(String) -> Unit> { {} }
 
-enum class Tab(val title: String, val icon: ImageVector) {
+enum class PhotoMode { CAPTURE, COMPARE }
+
+enum class Tab(val title: String, val icon: ImageVector, val short: String = title) {
     TODAY("Сегодня", Icons.Filled.Today),
-    FOOD("Питание", Icons.Filled.Restaurant),
-    BODY("Тело", Icons.Filled.MonitorWeight),
-    TRAINING("Тренировки", Icons.Filled.FitnessCenter),
+    FOOD("Питание", Icons.Filled.Restaurant, "Еда"),
+    BODY("Тело", Icons.Filled.Accessibility),
+    TRAINING("Тренировки", Icons.Filled.FitnessCenter, "Силовые"),
     COACH("Коуч", Icons.AutoMirrored.Filled.Chat),
 }
 
@@ -76,6 +89,7 @@ fun AppRoot(app: App) {
     var settingsOpen by rememberSaveable { mutableStateOf(false) }
     var workoutOpen by rememberSaveable { mutableStateOf(false) }
     var labsOpen by rememberSaveable { mutableStateOf(false) }
+    var photoMode by rememberSaveable { mutableStateOf<PhotoMode?>(null) }
     var quickOpen by remember { mutableStateOf(false) }
     var pendingQuick by remember { mutableStateOf<Quick?>(null) }
     val snack = remember { SnackbarHostState() }
@@ -89,7 +103,18 @@ fun AppRoot(app: App) {
         if (weightsNow != null) runCatching { app.nutrition.refreshTargets() }
     }
 
+    // Корневой Surface задаёт цвет текста по умолчанию для ВСЕХ экранов, включая полноэкранные (тренировка, настройки,
+    // фото). Без него Text вне Scaffold получал чёрный LocalContentColor — «чёрное на чёрном» в режиме тренировки (0.4.0).
+    androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = Z.Bg, contentColor = Z.Text) {
     CompositionLocalProvider(LocalApp provides app, LocalSnack provides showSnack) {
+        if (photoMode != null) {
+            BackHandler { photoMode = null }
+            when (photoMode) {
+                PhotoMode.CAPTURE -> PhotoCaptureScreen(onClose = { photoMode = null })
+                else -> PhotoCompareScreen(onClose = { photoMode = null }, onCapture = { photoMode = PhotoMode.CAPTURE })
+            }
+            return@CompositionLocalProvider
+        }
         if (settingsOpen) {
             BackHandler { settingsOpen = false }
             SettingsScreen(onClose = { settingsOpen = false })
@@ -111,7 +136,7 @@ fun AppRoot(app: App) {
         val glow = when (tab) { Tab.FOOD -> Z.Lime; Tab.TRAINING -> Z.Orange; Tab.BODY -> Z.Carbs; Tab.COACH -> Z.Protein; Tab.TODAY -> Z.Lime }
         Scaffold(
             modifier = Modifier.background(Z.Bg).drawBehind {
-                drawRect(Brush.radialGradient(listOf(glow.copy(alpha = 0.10f), Color.Transparent),
+                drawRect(Brush.radialGradient(listOf(glow.copy(alpha = 0.07f), Color.Transparent),
                     center = Offset(size.width * 0.1f, 0f), radius = size.width * 1.1f))
             },
             containerColor = Color.Transparent,
@@ -127,33 +152,13 @@ fun AppRoot(app: App) {
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 )
             },
-            floatingActionButton = {
-                if (tab != Tab.COACH) FloatingActionButton(onClick = { quickOpen = true }, containerColor = Z.Lime, contentColor = Z.Bg,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)) {
-                    Icon(Icons.Filled.Add, "Быстрый ввод")
-                }
-            },
-            bottomBar = {
-                NavigationBar(containerColor = Z.Surface, modifier = Modifier.drawBehind {
-                    drawLine(Z.Line, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx())
-                }) {
-                    Tab.entries.forEach { t ->
-                        NavigationBarItem(
-                            selected = tab == t, onClick = { tab = t },
-                            icon = { Icon(t.icon, t.title) },
-                            label = { Text(t.title, fontSize = 10.5.sp, maxLines = 1, softWrap = false, fontFamily = Manrope, fontWeight = FontWeight.Bold) },
-                            colors = NavigationBarItemDefaults.colors(selectedIconColor = Z.Bg, indicatorColor = Z.Lime,
-                                selectedTextColor = Z.Lime, unselectedIconColor = Z.Muted, unselectedTextColor = Z.Muted),
-                        )
-                    }
-                }
-            },
+            bottomBar = { FloatingNav(tab, onTab = { tab = it }, onPlus = { quickOpen = true }) },
         ) { pad ->
             val m = Modifier.padding(pad).fillMaxSize()
             when (tab) {
-                Tab.TODAY -> TodayScreen(m, onOpenTab = { tab = it }, onStartWorkout = { workoutOpen = true })
+                Tab.TODAY -> TodayScreen(m, onOpenTab = { tab = it }, onStartWorkout = { workoutOpen = true }, onPhoto = { photoMode = PhotoMode.CAPTURE })
                 Tab.FOOD -> NutritionScreen(m, pendingQuick) { pendingQuick = null }
-                Tab.BODY -> BodyScreen(m, pendingQuick, onOpenLabs = { labsOpen = true }) { pendingQuick = null }
+                Tab.BODY -> BodyScreen(m, pendingQuick, onOpenLabs = { labsOpen = true }, onPhotos = { photoMode = it }) { pendingQuick = null }
                 Tab.TRAINING -> TrainingScreen(m, pendingQuick, onStartWorkout = { workoutOpen = true }) { pendingQuick = null }
                 Tab.COACH -> CoachScreen(m)
             }
@@ -168,9 +173,62 @@ fun AppRoot(app: App) {
                     TextButton(onClick = { go(Quick.FOOD_BARCODE, Tab.FOOD) }) { Text("Еда по штрихкоду") }
                     TextButton(onClick = { go(Quick.FOOD_MANUAL, Tab.FOOD) }) { Text("Еда вручную") }
                     TextButton(onClick = { go(Quick.WEIGHT, Tab.BODY) }) { Text("Вес") }
+                    TextButton(onClick = { quickOpen = false; photoMode = PhotoMode.CAPTURE }) { Text("Фото прогресса") }
                     TextButton(onClick = { go(Quick.OTHER_ACTIVITY, Tab.TRAINING) }) { Text("Прочая активность (работа по дому)") }
                     TextButton(onClick = { quickOpen = false; tab = Tab.COACH }) { Text("Написать коучу") }
                 }
+            }
+        }
+    }
+    }
+}
+
+/**
+ * Плавающая панель навигации (0.5.0): капсула над краем экрана, подпись только у активной вкладки,
+ * «+» быстрого ввода — по центру панели. Раньше FAB перекрывал содержимое карточек.
+ */
+@Composable
+private fun FloatingNav(tab: Tab, onTab: (Tab) -> Unit, onPlus: () -> Unit) {
+    val left = listOf(Tab.TODAY, Tab.FOOD)
+    val right = listOf(Tab.BODY, Tab.TRAINING, Tab.COACH)
+    androidx.compose.foundation.layout.Box(
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) {
+        Row(
+            Modifier.fillMaxWidth().height(64.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(32.dp))
+                .background(Z.Surface2)
+                .border(1.dp, Z.Line, androidx.compose.foundation.shape.RoundedCornerShape(32.dp))
+                .padding(horizontal = 6.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            left.forEach { NavItem(it, tab == it, Modifier.weight(if (tab == it) 2.2f else 1f)) { onTab(it) } }
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Z.Lime).clickable(onClick = onPlus),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) { Icon(Icons.Filled.Add, "Быстрый ввод", tint = Z.OnAccent) }
+            right.forEach { NavItem(it, tab == it, Modifier.weight(if (tab == it) 2.2f else 1f)) { onTab(it) } }
+        }
+    }
+}
+
+@Composable
+private fun NavItem(t: Tab, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    androidx.compose.foundation.layout.Box(modifier.height(48.dp).padding(horizontal = 2.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        Row(
+            Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                .background(if (selected) Z.Lime.copy(alpha = 0.16f) else Color.Transparent)
+                .clickable(onClick = onClick)
+                .semantics { contentDescription = t.title }
+                .padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            Icon(t.icon, null, tint = if (selected) Z.Lime else Z.Muted, modifier = Modifier.size(22.dp))
+            if (selected) {
+                androidx.compose.foundation.layout.Spacer(Modifier.width(6.dp))
+                Text(t.short, color = Z.Lime, fontSize = 11.sp, maxLines = 1, softWrap = false, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

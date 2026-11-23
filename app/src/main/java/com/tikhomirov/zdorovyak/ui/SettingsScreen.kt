@@ -71,6 +71,8 @@ fun SettingsScreen(onClose: () -> Unit) {
     var rate by remember { mutableStateOf(profile.rateKgPerWeek.r1()) }
     var protPerKg by remember { mutableStateOf(profile.proteinPerKg.r1()) }
     var auto by remember { mutableStateOf(profile.autoTargets) }
+    var actToTarget by remember { mutableStateOf(profile.activityToTarget) }
+    var photoEvery by remember { mutableStateOf(profile.photoEveryDays) }
     val energy by app.settings.energy.collectAsState()
     var gEmail by remember { mutableStateOf(app.settings.garminEmail) }
     var gPass by remember { mutableStateOf(app.settings.garminPassword) }
@@ -113,8 +115,9 @@ fun SettingsScreen(onClose: () -> Unit) {
             sex = sex, activity = activity, goalMode = goalMode,
             rateKgPerWeek = rate.toDoubleOrNull()?.coerceIn(0.0, 1.0) ?: profile.rateKgPerWeek,
             proteinPerKg = protPerKg.toDoubleOrNull()?.coerceIn(0.8, 2.5) ?: profile.proteinPerKg,
-            autoTargets = auto,
+            autoTargets = auto, activityToTarget = actToTarget, photoEveryDays = photoEvery,
         ))
+        runCatching { com.tikhomirov.zdorovyak.body.PhotoReminder.schedule(app, photoEvery) }
         // Пересчёт норм подхватит AppRoot (следит за профилем и взвешиваниями)
     }
 
@@ -148,9 +151,9 @@ fun SettingsScreen(onClose: () -> Unit) {
 
             Muted("Пол")
             ChipRow(Sex.entries.map { it.name to it.title }, sex) { sex = it }
-            Muted("Активность")
+            Muted(if (auto && actToTarget) "Образ жизни (без тренировок — они прибавляются к норме в свой день)" else "Активность")
             ChipRow(Activity.entries.map { it.name to it.title }, activity) { activity = it }
-            Muted(runCatching { Activity.valueOf(activity).hint }.getOrDefault(""))
+            Muted(runCatching { Activity.valueOf(activity).let { if (auto && actToTarget) it.baseHint else it.hint } }.getOrDefault(""))
 
             SectionTitle("Нормы КБЖУ")
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -163,7 +166,14 @@ fun SettingsScreen(onClose: () -> Unit) {
                     if (goalMode != GoalMode.MAINTAIN.name) NumField("Темп, кг/нед", rate, { rate = it }, Modifier.weight(1f))
                     NumField("Белок, г/кг", protPerKg, { protPerKg = it }, Modifier.weight(1f))
                 }
-                Muted("Сейчас: ${profile.kcalTarget} ккал · Б ${profile.proteinTarget} · Ж ${profile.fatTarget} · У ${profile.carbsTarget}")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Прибавлять активность к норме")
+                        Muted("Силовые, работы по дому, тренировки Garmin: +ккал в тот же день, в углеводы")
+                    }
+                    Switch(checked = actToTarget, onCheckedChange = { actToTarget = it })
+                }
+                Muted("Базовая норма: ${profile.kcalTarget} ккал · Б ${profile.proteinTarget} · Ж ${profile.fatTarget} · У ${profile.carbsTarget}")
                 Muted("Старт — по формуле Миффлина–Сан Жеора от тренда веса. Когда наберётся 10 полных дней питания и 4 взвешивания за 3 недели, расход раз в неделю уточняется по факту: сколько съели и как менялся вес. Безопасный темп похудения 0,5–0,7 % веса в неделю; белок 1,6–2 г/кг для силовых после 40.")
                 if (energy.note.isNotBlank()) Muted(energy.note)
             } else {
@@ -175,6 +185,12 @@ fun SettingsScreen(onClose: () -> Unit) {
                     NumField("жиры", fat, { fat = it }, Modifier.weight(1f), decimal = false)
                     NumField("углеводы", carbs, { carbs = it }, Modifier.weight(1f), decimal = false)
                 }
+            }
+
+            SectionTitle("Фото прогресса")
+            Muted("Напоминать сфотографироваться (утром, натощак, при том же свете)")
+            ChipRow(listOf("0" to "Не напоминать", "7" to "Раз в неделю", "14" to "Раз в 2 недели", "28" to "Раз в месяц"), photoEvery.toString()) {
+                photoEvery = it.toInt()
             }
 
             SectionTitle("Голос коуча")

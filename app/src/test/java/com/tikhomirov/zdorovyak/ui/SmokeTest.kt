@@ -51,8 +51,10 @@ class SmokeTest {
         // Календарь сверху: расписание по умолчанию Пн-Ср-Пт, плитки дисциплины; программа ниже
         // Без ключа Claude собирается базовый план, экран настройки показывает почему — закрываем
         rule.waitUntil(15_000) { has("Ключ Claude не задан — использую базовый план.") }
+        // Ждём, пока план сохранится (снэкбар), иначе «Закрыть» успевает раньше записи в базу и экран остаётся пустым
+        rule.waitUntil(15_000) { rule.onAllNodesWithText("Собран базовый план (без ИИ)").fetchSemanticsNodes().isNotEmpty() }
         rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Закрыть"))
-        rule.onNodeWithText("Закрыть").performClick()
+        rule.onNodeWithText("Закрыть").performSemanticsAction(SemanticsActions.OnClick)  // снэкбар может лежать поверх кнопки
         rule.waitUntil(15_000) { has("Дни: Пн-Ср-Пт") }
         rule.onNodeWithText("на этой неделе").assertExists()
         rule.waitUntil(15_000) { runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Пересобрать")) }.isSuccess }

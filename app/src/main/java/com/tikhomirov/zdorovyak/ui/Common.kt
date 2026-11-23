@@ -57,17 +57,17 @@ fun Double.r1(): String = ("%.1f".format(ru, this)).replace(',', '.').removeSuff
 
 @Composable
 fun ZCard(modifier: Modifier = Modifier, accent: Color? = null, content: @Composable ColumnScope.() -> Unit) {
-    val shape = RoundedCornerShape(24.dp)
-    // Мягкий градиент сверху вниз и едва заметный ободок акцентного цвета — карточки читаются как слои, а не рамки
-    val top = accent?.let { lerp(Z.Surface, it, 0.06f) } ?: Z.Surface2
+    // 0.5.0: плоские слои без градиентов и цветных рамок. Карточку отделяет светлота фона и тонкая «волосяная» линия;
+    // акцент живёт в иконке заголовка и в цифрах, а не в обводке — так экран спокойнее и современнее.
+    val shape = RoundedCornerShape(28.dp)
     Column(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(top, Z.Surface)))
-            .border(1.dp, Brush.verticalGradient(listOf(accent?.copy(alpha = 0.40f) ?: Z.Line, Z.Line.copy(alpha = 0.5f))), shape)
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+            .background(Z.Surface)
+            .border(1.dp, Z.Line.copy(alpha = 0.55f), shape)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         content = content,
     )
 }
@@ -77,12 +77,12 @@ fun ZCard(modifier: Modifier = Modifier, accent: Color? = null, content: @Compos
 fun CardHeader(title: String, icon: ImageVector?, accent: Color, trailing: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         if (icon != null) {
-            Box(Modifier.size(30.dp).clip(CircleShape).background(accent.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = accent, modifier = Modifier.size(17.dp))
+            Box(Modifier.size(32.dp).clip(RoundedCornerShape(11.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = accent, modifier = Modifier.size(18.dp))
             }
             Spacer(Modifier.width(10.dp))
         }
-        Text(title, Modifier.weight(1f), fontFamily = Manrope, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(title, Modifier.weight(1f), fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, letterSpacing = (-0.2).sp)
         trailing?.invoke()
     }
 }
@@ -93,7 +93,8 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) =
         fontWeight = FontWeight.ExtraBold, letterSpacing = 1.4.sp)
 
 @Composable
-fun Big(text: String, color: Color = Z.Text) = Text(text, color = color, fontSize = 30.sp, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp)
+fun Big(text: String, color: Color = Z.Text) = Text(text, color = color, fontSize = 34.sp, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold,
+    letterSpacing = (-0.8).sp, style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = com.tikhomirov.zdorovyak.ui.theme.TNUM))
 
 @Composable
 fun Muted(text: String, modifier: Modifier = Modifier) = Text(text, modifier, color = Z.Muted, fontSize = 13.sp, lineHeight = 18.sp)

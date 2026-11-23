@@ -254,7 +254,7 @@ fun DaySheet(d: CalDay, today: Long, onStartWorkout: () -> Unit, onDismiss: () -
             when (d.status) {
                 DayStatus.TODAY -> {
                     Button(onClick = { onDismiss(); onStartWorkout() }, Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) { Text("Начать тренировку") }
+                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent)) { Text("Начать тренировку") }
                     OutlinedButton(onClick = { act("Перенесено на завтра") { app.training.moveToNextDay(d.day, profile.weekdays) } }, Modifier.fillMaxWidth()) {
                         Text("Перенести на завтра")
                     }
@@ -274,7 +274,7 @@ fun DaySheet(d: CalDay, today: Long, onStartWorkout: () -> Unit, onDismiss: () -
                 DayStatus.MISSED -> {
                     Muted("Тренировки в этот день нет в записях. Честно: что было?")
                     Button(onClick = { act("Отмечено: сделано") { app.training.mark(d.day, Mark.DONE) } }, Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) { Text("Сделал, но не записал") }
+                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent)) { Text("Сделал, но не записал") }
                     SkipButtons(d) { status, note, msg -> act(msg) { app.training.mark(d.day, status, note) } }
                 }
                 DayStatus.SKIPPED, DayStatus.EXCUSED, DayStatus.DONE_MANUAL, DayStatus.MOVED -> {
@@ -283,7 +283,7 @@ fun DaySheet(d: CalDay, today: Long, onStartWorkout: () -> Unit, onDismiss: () -
                 }
                 DayStatus.REST -> if (d.day >= today) {
                     if (d.day == today) Button(onClick = { onDismiss(); onStartWorkout() }, Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) { Text("Внеплановая тренировка") }
+                        colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent)) { Text("Внеплановая тренировка") }
                     OutlinedButton(onClick = { act("Тренировка добавлена в календарь") { app.training.mark(d.day, Mark.EXTRA) } }, Modifier.fillMaxWidth()) {
                         Text("Запланировать тренировку на этот день")
                     }
