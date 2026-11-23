@@ -77,7 +77,7 @@ $snapshot
         }
         val food = db.food().range(today - 6, today).groupBy { it.day }
         if (food.isNotEmpty()) {
-            sb.appendLine("Питание (цель ${p.kcalTarget} ккал, белок ${p.proteinTarget} г):")
+            sb.appendLine("Питание (базовая цель ${p.kcalTarget} ккал, белок ${p.proteinTarget} г${if (p.activityToTarget && p.autoTargets) "; в дни тренировок и работ к цели прибавляется их расход" else ""}):")
             food.toSortedMap().forEach { (d, list) ->
                 sb.appendLine("  ${LocalDate.ofEpochDay(d)}: ${list.sumOf { it.kcal }.roundToInt()} ккал, Б ${list.sumOf { it.protein }.roundToInt()} г, записей ${list.size}")
             }

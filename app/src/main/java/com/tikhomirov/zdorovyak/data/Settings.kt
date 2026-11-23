@@ -29,6 +29,10 @@ data class Profile(
     val rateKgPerWeek: Double = 0.5,
     val proteinPerKg: Double = 1.8,
     val autoTargets: Boolean = true,
+    /** Прибавлять к норме дня расход на тренировки и работы (nutrition/ActivityBurn). */
+    val activityToTarget: Boolean = true,
+    /** Напоминать о фото прогресса раз в N дней; 0 — не напоминать. */
+    val photoEveryDays: Int = 14,
     val experience: String = "небольшой",
     val trainingDays: Int = 3,
     /** Дни силовых, ISO: 1 — понедельник … 7 — воскресенье. Пусто — ещё не выбирали (берём по trainingDays). */
@@ -51,6 +55,8 @@ data class EnergyState(
     val lastCheckDay: Long = 0,
     val note: String = "",
     val formulaTdee: Double? = null,
+    /** true — tdee посчитан без тренировок (они прибавляются к норме в свой день). */
+    val baseMode: Boolean = false,
 )
 
 /**

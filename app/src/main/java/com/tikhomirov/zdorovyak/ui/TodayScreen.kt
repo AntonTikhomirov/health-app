@@ -39,13 +39,17 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: () -> Unit) {
+fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: () -> Unit, onPhoto: () -> Unit = {}) {
     val app = LocalApp.current
     val snack = LocalSnack.current
     val scope = rememberCoroutineScope()
@@ -61,14 +65,31 @@ fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: ()
     LaunchedEffect(program, cal?.todayDay?.status) { session = app.training.nextSession(profile) }
 
     var sheetDay by remember { mutableStateOf<CalDay?>(null) }
+    val photos by app.db.body().photos().collectAsState(initial = null)
 
     val greet = when (LocalTime.now().hour) { in 5..11 -> "Доброе утро"; in 12..17 -> "Добрый день"; else -> "Добрый вечер" }
     Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(Modifier.padding(top = 4.dp)) {
             Text(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM", ru)).uppercase(), color = Z.Lime, fontSize = 11.sp,
                 fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.4.sp)
-            Text("$greet, ${profile.name}", fontSize = 26.sp, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp,
-                lineHeight = 30.sp)
+            Text("$greet, ${profile.name}", fontSize = 30.sp, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.8).sp,
+                lineHeight = 34.sp)
+        }
+
+        // Пора сделать фото прогресса — тонкая плашка, а не карточка: это напоминание, а не раздел
+        photos?.let { ph ->
+            val last = ph.maxOfOrNull { it.day }
+            if (com.tikhomirov.zdorovyak.body.BodyPhotos.due(last, profile.photoEveryDays)) {
+                Row(Modifier.fillMaxWidth().clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp)).background(Z.Protein.copy(alpha = 0.12f))
+                    .clickable(onClick = onPhoto).padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    androidx.compose.material3.Icon(Icons.Filled.CameraAlt, null, tint = Z.Protein, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text(if (last == null) "Сделайте первые фото прогресса" else "Пора обновить фото прогресса: ${today() - last} дн.",
+                        Modifier.weight(1f), color = Z.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Снять", color = Z.Protein, fontFamily = Manrope, fontWeight = FontWeight.ExtraBold)
+                }
+            }
         }
 
         // Питание: кольца КБЖУ
@@ -76,11 +97,13 @@ fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: ()
             CardHeader("Питание", Icons.Filled.Restaurant, Z.Lime) {
                 TextButton(onClick = { onOpenTab(Tab.FOOD) }) { Text("+ Еда") }
             }
+            val dt = rememberDayTarget(today())
             NutritionRings(
                 Macros(food.sumOf { it.kcal }, food.sumOf { it.protein }, food.sumOf { it.fat }, food.sumOf { it.carbs }),
-                Macros(profile.kcalTarget.toDouble(), profile.proteinTarget.toDouble(), profile.fatTarget.toDouble(), profile.carbsTarget.toDouble()),
+                dt.target,
                 compact = true,
             )
+            ActivityBurnRow(dt)
         }
 
         // Тренировка: что по календарю сегодня
@@ -112,7 +135,7 @@ fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: ()
                         Muted("${it2.exercise.nameRu}: ${it2.sets}×${it2.state.targetReps}$w${it2.skippedReason?.let { r -> " (пропуск: $r)" } ?: ""}")
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = onStartWorkout, colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.Bg)) { Text("Начать") }
+                        Button(onClick = onStartWorkout, colors = ButtonDefaults.buttonColors(containerColor = Z.Orange, contentColor = Z.OnAccent)) { Text("Начать") }
                         OutlinedButton(onClick = { sheetDay = t }) { Text("Перенести / пропуск") }
                     }
                 }

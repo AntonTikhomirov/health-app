@@ -14,27 +14,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.tikhomirov.zdorovyak.R
 
+/**
+ * Палитра 0.5.0. Тёмная «графитовая» тема: слои различаются светлотой, а не рамками.
+ * Контраст по WCAG 2.1 (проверен скриптом, см. docs/design/v050-redesign.md):
+ *  Text ≥ 13:1, Muted ≥ 6:1, Faint ≥ 4,5:1 на любом слое (Bg…Surface3) — годится для мелкого текста;
+ *  акценты ≥ 6:1 на Surface; тёмный текст OnAccent на любом акценте ≥ 9:1.
+ */
 object Z {
-    val Bg = Color(0xFF0C0F0D)
-    val Surface = Color(0xFF151916)
-    val Surface2 = Color(0xFF1D221E)
-    val Surface3 = Color(0xFF262C27)
-    val Line = Color(0xFF29302A)
-    val Text = Color(0xFFEFF3EE)
-    val Muted = Color(0xFF97A098)
-    val Faint = Color(0xFF5E675F)
+    val Bg = Color(0xFF0B0D0C)
+    val Surface = Color(0xFF141716)
+    val Surface2 = Color(0xFF1C201E)
+    val Surface3 = Color(0xFF262B28)
+    val Line = Color(0xFF2A302C)
+    val Text = Color(0xFFF2F5F2)
+    val Muted = Color(0xFFA3ACA6)
+    val Faint = Color(0xFF8A938D)
+    val OnAccent = Color(0xFF0B0D0C)  // текст и иконки на ярких кнопках
     val Lime = Color(0xFFC8F169)
-    val Orange = Color(0xFFF2A65A)   // силовые
-    val Blue = Color(0xFF6BB8FF)     // кардио
+    val Orange = Color(0xFFF5A962)   // силовые
+    val Blue = Color(0xFF74BEFF)     // кардио
     val Sand = Color(0xFFD9C7A0)     // прочая активность
-    val Red = Color(0xFFFF7A6B)
+    val Red = Color(0xFFFF8577)
 
     // КБЖУ: у каждого макронутриента свой цвет, один и тот же на всех экранах
     val Kcal = Lime
-    val Protein = Color(0xFFFF8FB1)
+    val Protein = Color(0xFFFF94B6)
     val Fat = Color(0xFFFFC65C)
-    val Carbs = Color(0xFF72C8FF)
+    val Carbs = Color(0xFF74C8FF)
 }
+
+/** Цифры одинаковой ширины: столбцы и счётчики не «прыгают». */
+const val TNUM = "tnum"
 
 @OptIn(ExperimentalTextApi::class)
 private fun variable(res: Int, w: Int) = Font(res, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w)))
@@ -63,10 +73,11 @@ private val type = Typography().let { t ->
 }
 
 private val scheme = darkColorScheme(
-    primary = Z.Lime, onPrimary = Color(0xFF13200A),
+    primary = Z.Lime, onPrimary = Z.OnAccent,
     primaryContainer = Color(0xFF2C3A15), onPrimaryContainer = Z.Lime,
     secondary = Z.Orange, onSecondary = Color(0xFF2A1600),
-    secondaryContainer = Color(0xFF3A2814), onSecondaryContainer = Z.Orange,
+    // выбранные чипы (FilterChip) — в лаймовом тоне, как навигация
+    secondaryContainer = Color(0xFF2C3A15), onSecondaryContainer = Z.Lime,
     tertiary = Z.Blue,
     background = Z.Bg, onBackground = Z.Text,
     surface = Z.Surface, onSurface = Z.Text,
@@ -74,7 +85,8 @@ private val scheme = darkColorScheme(
     surfaceContainer = Z.Surface, surfaceContainerHigh = Z.Surface2, surfaceContainerHighest = Z.Surface3,
     surfaceContainerLow = Z.Surface, surfaceContainerLowest = Z.Bg,
     outline = Z.Line, outlineVariant = Z.Line,
-    error = Z.Red,
+    error = Z.Red, onError = Z.OnAccent,
+    inverseSurface = Z.Text, inverseOnSurface = Z.Bg,
 )
 
 @Composable

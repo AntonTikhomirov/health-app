@@ -57,4 +57,17 @@ class MigrationTest {
         val m = db.query("SELECT status FROM training_mark WHERE day = 20401"); m.moveToFirst()
         assertEquals("SKIPPED", m.getString(0))
     }
+
+    @Test fun migrate4to5() {
+        helper.createDatabase("m5.db", 4).apply {
+            execSQL("INSERT INTO weight (day, weightKg, bodyFatPct, note) VALUES (20400, 95.0, NULL, '')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("m5.db", 5, true, AppDatabase.MIGRATION_4_5)
+        val w = db.query("SELECT COUNT(*) FROM weight"); w.moveToFirst()
+        assertEquals(1, w.getInt(0))
+        db.execSQL("INSERT INTO body_photo (day, pose, filePath, takenAt) VALUES (20400, 'FRONT', '/x.jpg', 1)")
+        val p = db.query("SELECT pose FROM body_photo"); p.moveToFirst()
+        assertEquals("FRONT", p.getString(0))
+    }
 }

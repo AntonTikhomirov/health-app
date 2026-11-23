@@ -63,7 +63,7 @@ class TrainingReminder(ctx: Context, params: WorkerParameters) : CoroutineWorker
         fun canNotify(ctx: Context): Boolean = Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-        fun notify(ctx: Context, title: String, text: String) {
+        fun notify(ctx: Context, title: String, text: String, id: Int = 1001) {
             if (!canNotify(ctx)) return
             val nm = ctx.getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(NotificationChannel(CHANNEL, "Тренировки", NotificationManager.IMPORTANCE_DEFAULT))
@@ -75,7 +75,7 @@ class TrainingReminder(ctx: Context, params: WorkerParameters) : CoroutineWorker
                 .setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 .setContentIntent(pi).setAutoCancel(true)
                 .build()
-            nm.notify(1001, n)
+            nm.notify(id, n)
         }
     }
 }

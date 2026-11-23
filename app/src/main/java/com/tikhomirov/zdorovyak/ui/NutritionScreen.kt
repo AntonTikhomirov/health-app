@@ -213,17 +213,19 @@ fun NutritionScreen(modifier: Modifier, quick: Quick?, consumeQuick: () -> Unit)
             }
         }
         item {
+            val dt = rememberDayTarget(day)
             ZCard(accent = Z.Lime) {
                 NutritionRings(
                     Macros(entries.sumOf { it.kcal }, entries.sumOf { it.protein }, entries.sumOf { it.fat }, entries.sumOf { it.carbs }),
-                    Macros(profile.kcalTarget.toDouble(), profile.proteinTarget.toDouble(), profile.fatTarget.toDouble(), profile.carbsTarget.toDouble()),
+                    dt.target,
                 )
+                ActivityBurnRow(dt)
                 MealSplitBar(meals.mapIndexed { i, m -> Triple(m, entries.filter { it.meal == m }.sumOf { it.kcal }, mealColors[i]) },
                     Modifier.padding(top = 4.dp))
                 val status = when {
                     !profile.autoTargets -> "Нормы заданы вручную"
-                    energy.adaptive && energy.tdee != null -> "Нормы авто · расход по факту ≈ ${energy.tdee!!.r0()} ккал"
-                    energy.formulaTdee != null -> "Нормы авто · расход по формуле ≈ ${energy.formulaTdee!!.r0()} ккал"
+                    energy.adaptive && energy.tdee != null -> "Нормы авто · ${if (energy.baseMode) "базовый " else ""}расход по факту ≈ ${energy.tdee!!.r0()} ккал"
+                    energy.formulaTdee != null -> "Нормы авто · ${if (profile.activityToTarget) "базовый " else ""}расход по формуле ≈ ${energy.formulaTdee!!.r0()} ккал"
                     else -> "Нормы авто · нужен вес"
                 }
                 Row(Modifier.fillMaxWidth().clickable { showEnergyNote = !showEnergyNote }.padding(top = 6.dp)) {

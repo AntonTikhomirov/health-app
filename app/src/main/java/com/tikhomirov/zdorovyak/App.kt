@@ -20,6 +20,7 @@ class App : Application() {
     lateinit var garmin: GarminClient; private set
     lateinit var labs: com.tikhomirov.zdorovyak.labs.LabsRepo; private set
     lateinit var speaker: com.tikhomirov.zdorovyak.voice.Speaker; private set
+    lateinit var photos: com.tikhomirov.zdorovyak.body.BodyPhotos; private set
 
     override fun onCreate() {
         super.onCreate()
@@ -34,7 +35,9 @@ class App : Application() {
         garmin = GarminClient(settings, db)
         labs = com.tikhomirov.zdorovyak.labs.LabsRepo(this, db, claude, settings) { coach }
         speaker = com.tikhomirov.zdorovyak.voice.Speaker(this, settings)
+        photos = com.tikhomirov.zdorovyak.body.BodyPhotos(this, db)
         runCatching { com.tikhomirov.zdorovyak.garmin.GarminSyncWorker.schedule(this) }
         runCatching { com.tikhomirov.zdorovyak.strength.TrainingReminder.schedule(this, settings.profile.value.remindHour) }
+        runCatching { com.tikhomirov.zdorovyak.body.PhotoReminder.schedule(this, settings.profile.value.photoEveryDays) }
     }
 }
