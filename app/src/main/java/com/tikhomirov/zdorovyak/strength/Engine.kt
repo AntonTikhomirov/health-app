@@ -76,10 +76,6 @@ object Engine {
     /** Оценка 1ПМ: Эпли с поправкой на запас повторов. */
     fun e1rm(weight: Double, reps: Int, rir: Double): Double = weight * (1 + (reps + rir) / 30.0)
 
-    /** Рабочий вес на ~10 повторов с запасом 2–3 ≈ 70% e1RM, вниз до доступного шага. */
-    fun workingWeightFromTrial(weights: List<Double>, weight: Double, reps: Int, feel: Feel): Double =
-        roundDownTo(weights, 0.70 * e1rm(weight, reps, feel.rir))
-
     fun progress(ex: Exercise, s: ExState, r: ExResult, weights: List<Double>, freezeIncreases: Boolean = false): Outcome {
         // Боль — первым делом
         if (r.pain >= 5) {
@@ -195,21 +191,52 @@ object Engine {
             }
         }
         val w = if (r.weightKg > 0) r.weightKg else s.weightKg
-        val reps = r.reps.maxOrNull() ?: 0
-        if (n == 1) {
-            val work = workingWeightFromTrial(weights, w, reps, r.feel)
-            val final = if (reps >= 15) roundDownTo(weights, w * 1.15).coerceAtLeast(work) else work
-            return Outcome(s.copy(weightKg = final, targetReps = s.repMin, calibrationSessions = n),
-                "Оценка 1ПМ ≈ ${fmt(e1rm(w, reps, r.feel.rir))} кг → рабочий вес ${fmt(final)} кг.")
+        val best = r.reps.maxOrNull() ?: 0
+        val worst = r.reps.minOrNull() ?: 0
+        // Объективные повторы важнее кнопки: всё на верху диапазона = «легко», ниже минимума = «тяжело»
+        val feel = when {
+            r.reps.isNotEmpty() && worst < s.repMin -> Feel.HARD
+            r.feel == Feel.NORMAL && r.reps.isNotEmpty() && worst >= s.repMax -> Feel.EASY
+            else -> r.feel
         }
-        val adj = when (r.feel) {
-            Feel.EASY -> nextUp(weights, w)?.takeIf { it <= w * 1.20 + 1e-6 } ?: w // первая оценка обычно занижена
-            Feel.HARD -> roundDownTo(weights, w * 0.9)
-            Feel.NORMAL -> w
+        val e = e1rm(w, best, feel.rir)
+        val prefix = if (n == 1) "Оценка 1ПМ ≈ ${fmt(e)} кг. " else ""
+        // 15+ повторов: вес явно лёгкий, сразу +15% (спека, п. 3)
+        if (best >= 15) {
+            val up = roundDownTo(weights, w * 1.15).let { if (it <= w) nextUp(weights, w) ?: w else it }
+            return Outcome(s.copy(weightKg = up, targetReps = s.repMin, calibrationSessions = n, calibrated = done),
+                prefix + "15+ повторов — берём тяжелее: ${fmt(w)} → ${fmt(up)} кг.")
         }
-        return Outcome(s.copy(weightKg = adj, targetReps = s.repMin, calibrationSessions = n, calibrated = done),
-            if (adj == w) "Вес подтверждён: ${fmt(w)} кг." else "Поправка: ${fmt(w)} → ${fmt(adj)} кг.")
+        return when (feel) {
+            // «Нормально» = запас 2–3 повтора, ровно то, что ищет прикидка. Вес держим, цель — сделанные повторы.
+            Feel.NORMAL -> {
+                val target = worst.coerceIn(s.repMin, s.repMax)
+                Outcome(s.copy(weightKg = w, targetReps = target, calibrationSessions = n, calibrated = done),
+                    prefix + "Вес подтверждён: ${fmt(w)} кг × $target.")
+            }
+            // «Легко»: первая оценка у новичков почти всегда занижена → шаг вверх до +20%, иначе растим повторы
+            Feel.EASY -> {
+                val up = nextUp(weights, w)?.takeIf { it <= w * 1.20 + 1e-6 }
+                if (up != null) Outcome(s.copy(weightKg = up, targetReps = s.repMin, calibrationSessions = n, calibrated = done),
+                    prefix + "Легко: ${fmt(w)} → ${fmt(up)} кг.")
+                else {
+                    val target = min(s.repMax, worst.coerceAtLeast(s.repMin) + 2)
+                    Outcome(s.copy(weightKg = w, targetReps = target, calibrationSessions = n, calibrated = done),
+                        prefix + "Легко, но шаг веса крупный: вес ${fmt(w)} кг, цель $target повторов.")
+                }
+            }
+            // «Тяжело» или меньше минимума: вес под нижнюю границу диапазона с запасом 2–3
+            Feel.HARD -> {
+                val est = roundDownTo(weights, weightForReps(e, s.repMin)).coerceAtMost(w)
+                val adj = if (est >= w && worst < s.repMin) nextDown(weights, w) ?: w else est
+                Outcome(s.copy(weightKg = adj, targetReps = s.repMin, calibrationSessions = n, calibrated = done),
+                    prefix + if (adj == w) "Тяжело: вес ${fmt(w)} кг, цель — ${s.repMin} повторов." else "Тяжело: ${fmt(w)} → ${fmt(adj)} кг, цель — ${s.repMin} повторов.")
+            }
+        }
     }
+
+    /** Вес, с которым выйдет [reps] повторов с запасом 2–3 (обратная формула Эпли). */
+    fun weightForReps(e1rm: Double, reps: Int, rir: Double = Feel.NORMAL.rir): Double = e1rm / (1 + (reps + rir) / 30.0)
 
     private fun feelRir(f: Feel): Int = when (f) { Feel.HARD -> 0; Feel.NORMAL -> 2; Feel.EASY -> 4 }
 

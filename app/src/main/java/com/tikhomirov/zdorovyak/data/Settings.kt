@@ -136,6 +136,34 @@ class Settings(ctx: Context) {
         get() = plain.getInt("coach_mem_count", 0)
         set(v) = plain.edit().putInt("coach_mem_count", v).apply()
 
+    // ---------- Проактивные подсказки коуча (coach/Nudges) ----------
+
+    var nudgesEnabled: Boolean
+        get() = plain.getBoolean("nudges_on", true)
+        set(v) = plain.edit().putBoolean("nudges_on", v).apply()
+
+    /** Час проверки и уведомления (0–23). Вечер: день почти прожит, но ещё можно что-то поправить. */
+    var nudgeHour: Int
+        get() = plain.getInt("nudge_hour", 20)
+        set(v) = plain.edit().putInt("nudge_hour", v.coerceIn(0, 23)).apply()
+
+    /** Выключенные группы подсказок (NudgeGroup.name). */
+    var nudgeMuted: Set<String>
+        get() = plain.getStringSet("nudge_muted", emptySet())?.toSet() ?: emptySet()
+        set(v) = plain.edit().putStringSet("nudge_muted", v).apply()
+
+    private val _nudges = MutableStateFlow(
+        plain.getString("nudge_log", null)?.let { runCatching { json.decodeFromString<List<com.tikhomirov.zdorovyak.coach.NudgeRecord>>(it) }.getOrNull() } ?: emptyList()
+    )
+    /** Последние подсказки (до 40), новые в конце. */
+    val nudges: StateFlow<List<com.tikhomirov.zdorovyak.coach.NudgeRecord>> = _nudges
+
+    fun saveNudges(list: List<com.tikhomirov.zdorovyak.coach.NudgeRecord>) {
+        val l = list.takeLast(40)
+        plain.edit().putString("nudge_log", json.encodeToString(l)).apply()
+        _nudges.value = l
+    }
+
     // ---------- Голос коуча ----------
 
     /** Озвучка ответов: off / device (Google TTS на телефоне) / yandex (SpeechKit) / google (Cloud TTS). */

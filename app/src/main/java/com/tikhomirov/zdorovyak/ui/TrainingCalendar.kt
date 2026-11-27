@@ -237,8 +237,16 @@ fun DaySheet(d: CalDay, today: Long, onStartWorkout: () -> Unit, onDismiss: () -
     val scope = rememberCoroutineScope()
     val profile by app.settings.profile.collectAsState()
     fun act(msg: String, block: suspend () -> Unit) { scope.launch { block(); snack(msg) }; onDismiss() }
+    // Прошедший день — записи дневника; будущий — что запланировано
+    var logs by remember(d.day) { mutableStateOf<List<com.tikhomirov.zdorovyak.strength.WorkoutLog>?>(null) }
+    var preview by remember(d.day) { mutableStateOf<List<com.tikhomirov.zdorovyak.strength.PlannedExercise>>(emptyList()) }
+    androidx.compose.runtime.LaunchedEffect(d.day, d.status) {
+        logs = app.training.workoutLogsOn(d.day)
+        val pd = d.planDay
+        preview = if (pd != null && (d.status == DayStatus.TODAY || d.status == DayStatus.PLANNED)) app.training.preview(pd) else emptyList()
+    }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Z.Surface) {
-        Column(Modifier.fillMaxWidth().padding(20.dp, 0.dp, 20.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp, 0.dp, 20.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             val title = d.date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", ru)).replaceFirstChar { it.uppercase() }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 DayDot(d, 40.dp)
@@ -289,9 +297,14 @@ fun DaySheet(d: CalDay, today: Long, onStartWorkout: () -> Unit, onDismiss: () -
                     }
                     if (d.status == DayStatus.REST && d.day > today) Muted("Плановый день по расписанию: ${Schedule.describe(profile.weekdays)}.")
                 } else Muted("День отдыха.")
-                DayStatus.DONE -> Muted("Тренировка записана. Подробности — в истории ниже.")
+                DayStatus.DONE -> if (logs?.isEmpty() == true) Muted("Тренировка отмечена, но подходов в записи нет.")
                 DayStatus.REPLACED -> Muted("Вместо тренировки была физработа — день засчитан.")
             }
+            logs?.forEach { log ->
+                if (logs!!.size > 1) SectionTitle("День ${log.workout.dayName}")
+                WorkoutLogContent(log)
+            }
+            if (logs.isNullOrEmpty()) PlannedPreview(preview, isNext = d.status == DayStatus.TODAY)
         }
     }
 }

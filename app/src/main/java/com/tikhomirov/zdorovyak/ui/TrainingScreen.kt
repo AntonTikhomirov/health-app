@@ -79,6 +79,10 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
     var scheduleOpen by remember { mutableStateOf(false) }
     var sheetDay by remember { mutableStateOf<CalDay?>(null) }
     var weekStart by remember { mutableStateOf(Schedule.weekStart(today())) }
+    var openLog by remember { mutableStateOf<Long?>(null) }
+    var logLimit by remember { mutableStateOf(10) }
+    var logs by remember { mutableStateOf<List<com.tikhomirov.zdorovyak.strength.WorkoutLog>>(emptyList()) }
+    LaunchedEffect(workouts, logLimit) { logs = workouts.take(logLimit).mapNotNull { app.training.workoutLog(it.id) } }
 
     LaunchedEffect(quick) { if (quick == Quick.OTHER_ACTIVITY) { otherDialog = true; consumeQuick() } }
     LaunchedEffect(programEntity) { loaded = true }
@@ -189,14 +193,16 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
                     }
                 }
             }
-            item { SectionTitle("История тренировок") }
-            if (workouts.isEmpty()) item { Muted("Пока пусто") }
-            items(workouts.take(20), key = { "w${it.id}" }) { w ->
-                Row(Modifier.fillMaxWidth()) {
-                    Text("${dayLabel(w.day)} · день ${w.dayName}", Modifier.weight(1f))
-                    if (w.calibration) Pill("прикидка", Z.Orange)
-                    w.finishedAt?.let { Muted("  ${(it - w.startedAt) / 60000} мин") }
+            item {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    SectionTitle("Дневник тренировок", Modifier.weight(1f))
+                    if (workouts.isNotEmpty()) Muted("всего ${workouts.size}")
                 }
+            }
+            if (workouts.isEmpty()) item { Muted("Пока пусто. После первой тренировки здесь будут подходы, веса, оценки и что движок поменял на следующий раз.") }
+            items(logs, key = { "w${it.workout.id}" }) { log -> WorkoutLogRow(log) { openLog = log.workout.id } }
+            if (workouts.size > logLimit) item {
+                TextButton(onClick = { logLimit += 20 }, modifier = Modifier.fillMaxWidth()) { Text("Показать ещё") }
             }
             item { Spacer(Modifier.height(80.dp)) }
         }
@@ -209,6 +215,7 @@ fun TrainingScreen(modifier: Modifier, quick: Quick?, onStartWorkout: () -> Unit
         onRebuild = { setupOpen = true },
     )
     sheetDay?.let { d -> DaySheet(d, today(), onStartWorkout = onStartWorkout, onDismiss = { sheetDay = null }) }
+    openLog?.let { id -> WorkoutLogSheet(id) { openLog = null } }
 }
 
 @Composable

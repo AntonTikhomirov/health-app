@@ -15,8 +15,8 @@ android {
         applicationId = "com.tikhomirov.zdorovyak"
         minSdk = 29
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
     }
     // Свой ключ подписи: APK с любой машины ставятся поверх друг друга без потери данных.
     // Ключ НЕ хранится в git: положите keystore/zdorovyak.jks и keystore/keystore.properties

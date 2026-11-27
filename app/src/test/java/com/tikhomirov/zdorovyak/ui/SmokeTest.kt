@@ -72,12 +72,18 @@ class SmokeTest {
         rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("Завершить тренировку"))
         rule.onNodeWithText("Завершить тренировку").performClick()
         rule.waitUntil(10_000) { has("Готово. Что дальше") }
-        rule.onAllNodesWithText("рабочий вес", substring = true).onFirst().assertExists()
+        rule.onAllNodesWithText("Вес подтверждён", substring = true).onFirst().assertExists()
         rule.onNodeWithText("OK").performClick()
 
         // История появилась
         // история приходит из Room асинхронно — ждём, пока строка появится в списке
-        rule.waitUntil(10_000) { runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("прикидка")) }.isSuccess }
+        rule.waitUntil(10_000) { runCatching { rule.onNode(hasScrollAction() and hasVerticalRange()).performScrollToNode(hasText("упр. · ", substring = true)) }.isSuccess }
+        // Дневник: запись открывается, видны подходы и выводы движка
+        rule.onAllNodesWithText("упр. · ", substring = true).onFirst().performClick()
+        rule.waitUntil(10_000) { has("ЧТО ИЗМЕНИЛОСЬ НА СЛЕДУЮЩИЙ РАЗ") }
+        rule.onAllNodesWithText("Вес подтверждён", substring = true).onFirst().assertExists()
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
 
         // Коуч
         tab("Коуч")

@@ -116,6 +116,22 @@ interface TrainingDao {
     @Query("UPDATE workout SET finishedAt = :t WHERE id = :id")
     suspend fun finishWorkout(id: Long, t: Long)
 
+    @Query("UPDATE workout SET note = :note WHERE id = :id")
+    suspend fun setWorkoutNote(id: Long, note: String)
+
+    @Query("SELECT * FROM workout WHERE id = :id")
+    suspend fun workout(id: Long): WorkoutEntity?
+
+    @Query("SELECT * FROM workout WHERE finishedAt IS NOT NULL AND day = :day ORDER BY startedAt")
+    suspend fun workoutsOn(day: Long): List<WorkoutEntity>
+
+    /** Подходы по упражнению в последней тренировке до [before] (для сравнения «в прошлый раз»). */
+    @Query("""SELECT s.* FROM set_log s WHERE s.exerciseId = :ex AND s.workoutId = (
+        SELECT w.id FROM workout w JOIN set_log s2 ON s2.workoutId = w.id
+        WHERE s2.exerciseId = :ex AND w.finishedAt IS NOT NULL AND w.startedAt < :before
+        ORDER BY w.startedAt DESC LIMIT 1) ORDER BY s.setIndex""")
+    suspend fun previousSets(ex: String, before: Long): List<SetLog>
+
     @Query("SELECT * FROM workout WHERE finishedAt IS NOT NULL ORDER BY startedAt DESC")
     fun finishedWorkouts(): Flow<List<WorkoutEntity>>
 
