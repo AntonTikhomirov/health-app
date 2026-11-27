@@ -99,6 +99,8 @@ $snapshot
                 sb.appendLine("  ${LocalDate.ofEpochDay(it.day)}: сон ${it.sleepMinutes?.let { m -> "${m / 60}ч${m % 60}м" } ?: "-"} (оценка ${it.sleepScore ?: "-"}), пульс покоя ${it.restingHr ?: "-"}, HRV ${it.hrvAvg ?: "-"}, Body Battery ${it.bodyBatteryLow ?: "-"}–${it.bodyBatteryHigh ?: "-"}, стресс ${it.stressAvg ?: "-"}, шаги ${it.steps ?: "-"}")
             }
         }
+        val nudges = settings.nudges.value.filter { it.day >= today - 7 }
+        if (nudges.isNotEmpty()) sb.appendLine("Твои недавние подсказки-уведомления: " + nudges.joinToString { "${LocalDate.ofEpochDay(it.day)} «${it.title}»" })
         if (includeLabs) {
             val since = LocalDate.now().minusMonths(18).toEpochDay()
             val labs = db.labs().resultsNow().filter { it.day >= since }

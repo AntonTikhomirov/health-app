@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
@@ -92,6 +93,21 @@ fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: ()
             }
         }
 
+        // Подсказка коуча: последняя непрочитанная за 2 дня
+        val nudges by app.settings.nudges.collectAsState()
+        nudges.lastOrNull { !it.dismissed && it.day >= today() - 1 }?.let { n ->
+            val praise = n.kind == com.tikhomirov.zdorovyak.coach.NudgeKind.PRAISE.name
+            val c = if (praise) Z.Lime else Z.Protein
+            ZCard(accent = c) {
+                CardHeader(n.title, Icons.Filled.Psychology, c)
+                Text(n.text, color = Z.Text, fontSize = 15.sp, lineHeight = 21.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { scope.launch { app.nudges.toChat(n); onOpenTab(Tab.COACH) } }) { Text("Ответить коучу") }
+                    TextButton(onClick = { app.nudges.dismiss(n) }) { Text("Понятно") }
+                }
+            }
+        }
+
         // Питание: кольца КБЖУ
         ZCard(accent = Z.Lime, modifier = Modifier.clickable { onOpenTab(Tab.FOOD) }) {
             CardHeader("Питание", Icons.Filled.Restaurant, Z.Lime) {
@@ -125,6 +141,7 @@ fun TodayScreen(modifier: Modifier, onOpenTab: (Tab) -> Unit, onStartWorkout: ()
                 t?.status == DayStatus.DONE || t?.status == DayStatus.DONE_MANUAL || t?.status == DayStatus.REPLACED -> {
                     Text("Сегодня сделано. Так держать.", color = Z.Lime, fontFamily = Manrope, fontWeight = FontWeight.Bold)
                     cal.next?.let { Muted("Следующая — ${dayName(it.day)}${it.planDay?.let { p -> ", день $p" } ?: ""}.") }
+                    if (t.status == DayStatus.DONE) TextButton(onClick = { sheetDay = t }) { Text("Посмотреть запись") }
                 }
                 t?.status == DayStatus.TODAY && s != null -> {
                     Text("Сегодня день ${s.dayName}${if (s.calibration) " · прикидка" else ""}${if (s.deload) " · разгрузка" else ""}",

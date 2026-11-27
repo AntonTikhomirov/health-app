@@ -180,7 +180,30 @@ $catalogText
             msgs += "${r.item.exercise.nameRu}: ${out.message}"
         }
         dao.finishWorkout(wid, System.currentTimeMillis())
+        // Выводы движка сохраняем в дневник: «что изменилось на следующий раз»
+        dao.setWorkoutNote(wid, msgs.joinToString("\n"))
         return msgs
+    }
+
+    // ---------- Дневник ----------
+
+    suspend fun workoutLog(id: Long): WorkoutLog? {
+        val w = dao.workout(id) ?: return null
+        return WorkoutLog.build(w, dao.setsFor(id), dao.feedbackFor(id)) { ex -> dao.previousSets(ex, w.startedAt) }
+    }
+
+    suspend fun workoutLogsOn(day: Long): List<WorkoutLog> = dao.workoutsOn(day).mapNotNull { workoutLog(it.id) }
+
+    /** Что запланировано на день программы [planDay]: упражнения с текущими целями. */
+    suspend fun preview(planDay: String): List<PlannedExercise> {
+        val plan = parsePlan(dao.activeProgramNow()) ?: return emptyList()
+        val day = plan.days.firstOrNull { it.name == planDay } ?: return emptyList()
+        val states = dao.statesNow().associateBy { it.exerciseId }
+        return day.exercises.map { pe ->
+            val st = states[pe.exerciseId]
+            val ex = st?.variantId?.let { Catalog[it] } ?: Catalog[pe.exerciseId]
+            PlannedExercise(ex?.nameRu ?: pe.exerciseId, st?.sets ?: pe.sets, st?.targetReps ?: pe.repMin, st?.weightKg ?: 0.0, st?.calibrated == true)
+        }
     }
 
     // ---------- Календарь ----------

@@ -21,6 +21,7 @@ class App : Application() {
     lateinit var labs: com.tikhomirov.zdorovyak.labs.LabsRepo; private set
     lateinit var speaker: com.tikhomirov.zdorovyak.voice.Speaker; private set
     lateinit var photos: com.tikhomirov.zdorovyak.body.BodyPhotos; private set
+    lateinit var nudges: com.tikhomirov.zdorovyak.coach.NudgeRepo; private set
 
     override fun onCreate() {
         super.onCreate()
@@ -36,8 +37,10 @@ class App : Application() {
         labs = com.tikhomirov.zdorovyak.labs.LabsRepo(this, db, claude, settings) { coach }
         speaker = com.tikhomirov.zdorovyak.voice.Speaker(this, settings)
         photos = com.tikhomirov.zdorovyak.body.BodyPhotos(this, db)
+        nudges = com.tikhomirov.zdorovyak.coach.NudgeRepo(db, claude, settings, nutrition, training)
         runCatching { com.tikhomirov.zdorovyak.garmin.GarminSyncWorker.schedule(this) }
         runCatching { com.tikhomirov.zdorovyak.strength.TrainingReminder.schedule(this, settings.profile.value.remindHour) }
+        runCatching { com.tikhomirov.zdorovyak.coach.NudgeWorker.schedule(this, settings.nudgesEnabled, settings.nudgeHour) }
         runCatching { com.tikhomirov.zdorovyak.body.PhotoReminder.schedule(this, settings.profile.value.photoEveryDays) }
     }
 }

@@ -103,6 +103,11 @@ fun SettingsScreen(onClose: () -> Unit) {
         app.settings.voiceAutoSend = autoSend
     }
 
+    var nudgesOn by remember { mutableStateOf(app.settings.nudgesEnabled) }
+    var nudgeHour by remember { mutableStateOf(app.settings.nudgeHour) }
+    var nudgeMuted by remember { mutableStateOf(app.settings.nudgeMuted) }
+    var nudgeChecking by remember { mutableStateOf(false) }
+
     fun save() {
         saveVoice()
         app.settings.claudeKey = key
@@ -118,6 +123,8 @@ fun SettingsScreen(onClose: () -> Unit) {
             autoTargets = auto, activityToTarget = actToTarget, photoEveryDays = photoEvery,
         ))
         runCatching { com.tikhomirov.zdorovyak.body.PhotoReminder.schedule(app, photoEvery) }
+        app.settings.nudgesEnabled = nudgesOn; app.settings.nudgeHour = nudgeHour; app.settings.nudgeMuted = nudgeMuted
+        runCatching { com.tikhomirov.zdorovyak.coach.NudgeWorker.schedule(app, nudgesOn, nudgeHour) }
         // Пересчёт норм подхватит AppRoot (следит за профилем и взвешиваниями)
     }
 
@@ -191,6 +198,36 @@ fun SettingsScreen(onClose: () -> Unit) {
             Muted("Напоминать сфотографироваться (утром, натощак, при том же свете)")
             ChipRow(listOf("0" to "Не напоминать", "7" to "Раз в неделю", "14" to "Раз в 2 недели", "28" to "Раз в месяц"), photoEvery.toString()) {
                 photoEvery = it.toInt()
+            }
+
+            SectionTitle("Подсказки коуча")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Присылать подсказки", Modifier.weight(1f))
+                Switch(checked = nudgesOn, onCheckedChange = { nudgesOn = it })
+            }
+            Muted("Коуч сам замечает: больше или сильно меньше нормы, мало белка, пропуски тренировок, давно нет взвешивания — и хорошие недели тоже. Не чаще раза в день и 4 раз в неделю.")
+            if (nudgesOn) {
+                Muted("Во сколько")
+                ChipRow(listOf(9, 13, 18, 19, 20, 21).map { it.toString() to "$it:00" }, nudgeHour.toString()) { nudgeHour = it.toInt() }
+                Muted("О чём")
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    com.tikhomirov.zdorovyak.coach.NudgeGroup.entries.forEach { g ->
+                        FilterChip(selected = g.name !in nudgeMuted, onClick = {
+                            nudgeMuted = if (g.name in nudgeMuted) nudgeMuted - g.name else nudgeMuted + g.name
+                        }, label = { Text(g.ru) })
+                    }
+                }
+                OutlinedButton(enabled = !nudgeChecking, onClick = {
+                    save(); nudgeChecking = true
+                    scope.launch {
+                        val r = runCatching { app.nudges.runDaily() }
+                        nudgeChecking = false
+                        r.onSuccess { rec ->
+                            if (rec != null) { com.tikhomirov.zdorovyak.coach.NudgeWorker.notify(app, rec.title, rec.text); snack("Подсказка: ${rec.title}") }
+                            else snack("Сейчас поводов нет (или сегодня подсказка уже была)")
+                        }.onFailure { snack(it.message ?: "Ошибка") }
+                    }
+                }) { Text(if (nudgeChecking) "Проверяю…" else "Проверить сейчас") }
             }
 
             SectionTitle("Голос коуча")
